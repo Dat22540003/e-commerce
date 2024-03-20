@@ -29,11 +29,60 @@ const getProduct = asyncHandler(async (req, res) => {
 
 // Get all product filtering, sorting, and paginating
 const getProducts = asyncHandler(async (req, res) => {
-  const products = await Product.find();
-  return res.status(200).json({
-    success: products ? true : false,
-    productData: products ? products : "Cannot get products!",
-  });
+  const queries = { ...req.query };
+
+  // Separate the specified fields from queries
+  const excludedFields = ["page", "sort", "limit", "fields"];
+  excludedFields.forEach((el) => delete queries[el]);
+
+  // Format the queries to be used in mongoose
+  let queryString = JSON.stringify(queries);
+  queryString = queryString.replace(
+    /\b(gte|gt|lt|lte)\b/g,
+    (matchedEl) => `$${matchedEl}`
+  );
+  const formattedQueries = JSON.parse(queryString);
+
+  // Filtering
+  if (queries?.title) {
+    formattedQueries.title = { $regex: queries.title, $options: "i" };
+  }
+  let queryCommand = Product.find(formattedQueries);
+
+  // Sorting
+  if (req.query.sort) {
+    const sortBy = req.query.sort.split(",").join(" ");
+    queryCommand = queryCommand.sort(sortBy);
+  }
+
+  // Field limiting
+  if (req.query.fields) {
+    const fields = req.query.fields.split(",").join(" ");
+    queryCommand = queryCommand.select(fields);
+  }
+
+  // Pagination
+  // - litmit: number of results per API call
+  // - skip: number of results to skip
+  const page = +req.query.page || 1;
+  const limit = +req.query.limit || process.env.PAGINATION_LIMIT;
+  const skip = (page - 1) * limit;
+  queryCommand = queryCommand.skip(skip).limit(limit);
+
+  // Execute the query
+  try {
+    const products = await queryCommand.exec();
+    if (!products || products.length === 0)
+      throw new Error("Cannot get products!");
+    const count = await Product.find(formattedQueries).countDocuments();
+    return res.status(200).json({
+      success: products ? true : false,
+      count,
+      productData: products ? products : "Cannot get products!",
+    });
+  } catch (error) {
+    throw new Error(error.message);
+  }
 });
 
 //  Update product
@@ -57,10 +106,50 @@ const deleteProduct = asyncHandler(async (req, res) => {
   });
 });
 
+//
+const ratings = asyncHandler(async (req, res) => {
+  const { _id } = req.user;
+  const { star, comment, pid } = req.body;
+  if (!star || !pid) throw new Error("Missing inputs");
+  const ratingProduct = await Product.findById(pid);
+  const alreadyRating = ratingProduct?.ratings?.find((el) => el.postedBy.toString() === _id);
+
+  if (alreadyRating) {
+    // Update the rating
+    await Product.updateOne({
+      ratings: { $elemMatch: alreadyRating },
+    }, {
+      $set: { "ratings.$.star": star, "ratings.$.comment": comment },
+    })
+  } else {
+    // Add new rating
+    const response = await Product.findByIdAndUpdate(
+      pid,
+      {
+        $push: { ratings: { star, comment, postedBy: _id } },
+      },
+      { new: true }
+    );
+  }
+
+  // Calculate the total rating
+  const updatedProduct = await Product.findById(pid);
+  const ratingCount = updatedProduct.ratings.length;
+  const sumRating = updatedProduct.ratings.reduce((sum, el) => sum + +el.star, 0);
+  updatedProduct.totalRating = Math.round(sumRating * 10 / ratingCount) / 10;
+  await updatedProduct.save()
+
+  return res.status(200).json({
+    success: true,
+    updatedProduct,
+  });
+});
+
 module.exports = {
   createProduct,
   getProduct,
   getProducts,
   updateProduct,
   deleteProduct,
+  ratings,
 };
