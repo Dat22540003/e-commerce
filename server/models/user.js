@@ -1,6 +1,6 @@
-const mongoose = require("mongoose"); 
-const bcrypt = require("bcryptjs");
-const crypto = require("crypto");
+const mongoose = require('mongoose'); 
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
 // Declare the Schema of the Mongo model
 var userSchema = new mongoose.Schema(
@@ -29,14 +29,20 @@ var userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      default: "user",
+      default: 'user',
     },
-    cart: {
-      type: Array,
-      default: [],
+    cart: [{
+      product: {
+        type: mongoose.Types.ObjectId,
+        ref: 'Product',
+      },
+      quantity: Number,
+      color: String,
+    }],
+    address: {
+      type: String,
     },
-    address: [{ type: mongoose.Types.ObjectId, ref: "Address" }],
-    wishlist: [{ type: mongoose.Types.ObjectId, ref: "Address" }],
+    wishlist: [{ type: mongoose.Types.ObjectId, ref: 'Address' }],
     isBlocked: {
       type: Boolean,
       default: false,
@@ -78,4 +84,4 @@ userSchema.methods = {
 }
 
 //Export the model
-module.exports = mongoose.model("User", userSchema);
+module.exports = mongoose.model('User', userSchema);

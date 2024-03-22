@@ -112,15 +112,20 @@ const ratings = asyncHandler(async (req, res) => {
   const { star, comment, pid } = req.body;
   if (!star || !pid) throw new Error("Missing inputs");
   const ratingProduct = await Product.findById(pid);
-  const alreadyRating = ratingProduct?.ratings?.find((el) => el.postedBy.toString() === _id);
+  const alreadyRating = ratingProduct?.ratings?.find(
+    (el) => el.postedBy.toString() === _id
+  );
 
   if (alreadyRating) {
     // Update the rating
-    await Product.updateOne({
-      ratings: { $elemMatch: alreadyRating },
-    }, {
-      $set: { "ratings.$.star": star, "ratings.$.comment": comment },
-    })
+    await Product.updateOne(
+      {
+        ratings: { $elemMatch: alreadyRating },
+      },
+      {
+        $set: { "ratings.$.star": star, "ratings.$.comment": comment },
+      }
+    );
   } else {
     // Add new rating
     const response = await Product.findByIdAndUpdate(
@@ -135,13 +140,31 @@ const ratings = asyncHandler(async (req, res) => {
   // Calculate the total rating
   const updatedProduct = await Product.findById(pid);
   const ratingCount = updatedProduct.ratings.length;
-  const sumRating = updatedProduct.ratings.reduce((sum, el) => sum + +el.star, 0);
-  updatedProduct.totalRating = Math.round(sumRating * 10 / ratingCount) / 10;
-  await updatedProduct.save()
+  const sumRating = updatedProduct.ratings.reduce(
+    (sum, el) => sum + +el.star,
+    0
+  );
+  updatedProduct.totalRating = Math.round((sumRating * 10) / ratingCount) / 10;
+  await updatedProduct.save();
 
   return res.status(200).json({
     success: true,
     updatedProduct,
+  });
+});
+
+// Upload images
+const uploadProductImages = asyncHandler(async (req, res) => {
+  const { pid } = req.params;
+  if (req.files.length === 0) throw new Error("Missing inputs!");
+  const respone = await Product.findByIdAndUpdate(
+    pid,
+    { $push: { images: { $each: req.files.map((el) => el.path) } } },
+    { new: true },
+  );
+  return res.status(200).json({
+    success: respone ? true : false,
+    updatedProductImages: respone ? respone : "Cannot update product images!",
   });
 });
 
@@ -152,4 +175,5 @@ module.exports = {
   updateProduct,
   deleteProduct,
   ratings,
+  uploadProductImages,
 };

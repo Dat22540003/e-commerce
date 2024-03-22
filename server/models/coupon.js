@@ -2,11 +2,10 @@ const mongoose = require('mongoose');
 
 // Declare the Schema of the Mongo model
 var couponSchema = new mongoose.Schema({
-    title:{
+    name:{
         type:String,
         required:true,
-        unique:true,
-        index:true,
+        uppercase:true,
     },
     discount:{
         type:Number,

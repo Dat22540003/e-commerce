@@ -157,6 +157,21 @@ const deleteBlog = asyncHandler(async (req, res) => {
   });
 });
 
+// Upload images
+const uploadBlogImage = asyncHandler(async (req, res) => {
+  const { bid } = req.params;
+  if (!req.file) throw new Error("Missing inputs!");
+  const respone = await Blog.findByIdAndUpdate(
+    bid,
+    { images: req.file.path },
+    { new: true }
+  );
+  return res.status(200).json({
+    success: respone ? true : false,
+    updatedProductImages: respone ? respone : "Cannot update blog image!",
+  });
+});
+
 module.exports = {
   createNewBlog,
   updateBlog,
@@ -165,4 +180,5 @@ module.exports = {
   dislikeBlog,
   getBlog,
   deleteBlog,
+  uploadBlogImage,
 };
