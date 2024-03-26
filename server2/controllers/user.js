@@ -1,6 +1,8 @@
 const User = require('../models/user')
 const asyncHandler = require('express-async-handler')
 const { generateAccessToken, generateRefreshToken } = require('../middlewares/jwt')
+
+const jwt = require('jsonwebtoken')
 const register = asyncHandler(async(req, res) => {
     const {email, password, firstname, lastname} = req.body
     if (!email || !password || !lastname || !firstname)
@@ -61,8 +63,25 @@ const getCurrent = asyncHandler(async(req, res) => {
         rs: user ? user : 'User not found'
     })
 })
+const refreshAccessToken = asyncHandler(async(req, res) => {
+    // Lay token tu cookies
+    const cookie = req.cookies
+    // Check xem co token hay khong
+    if (!cookie && !cookie.refreshToken) throw new Error('No refresh token in cookies')
+    // Check token co hop le hay khong
+    jwt.verify(cookie.refreshToken, process.env.JWT_SECRET, async(err, decode) => {
+        if (err) throw new Error('Invalid refresh token')
+        // Check xem token co khop voi token da luu trong db
+        const response = await User.findOne({_id: decode._id, refreshToken: cookie.refreshToken})
+        return res.status(200).json({
+            sucess: response ? true : false,
+            newAccessToken: response ? generateAccessToken(response._id, response.role) : 'Refresh token not matched'
+        })
+    })
+})
 module.exports = {
     register,
     login,
-    getCurrent
+    getCurrent,
+    refreshAccessToken
 }
