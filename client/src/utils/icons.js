@@ -1,15 +1,27 @@
 import { RiPhoneFill } from "react-icons/ri";
 import { MdEmail } from "react-icons/md";
-import { BsFillHandbagFill } from "react-icons/bs";
+import { BsFillHandbagFill} from "react-icons/bs";
 import { BiSolidUserCircle } from "react-icons/bi";
-import { AiFillHome } from "react-icons/ai";
+import {
+  AiFillHome,
+  AiFillStar,
+  AiOutlineStar,
+  AiFillEye,
+  AiFillHeart
+} from "react-icons/ai";
+import { IoMenu } from "react-icons/io5";
 
 const icons = {
-    RiPhoneFill,
-    MdEmail,
-    BsFillHandbagFill,
-    BiSolidUserCircle,
-    AiFillHome,
+  RiPhoneFill,
+  MdEmail,
+  BsFillHandbagFill,
+  BiSolidUserCircle,
+  AiFillHome,
+  AiFillStar,
+  AiOutlineStar,
+  AiFillEye,
+  IoMenu,
+  AiFillHeart,
 };
 
 export default icons;

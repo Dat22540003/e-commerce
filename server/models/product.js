@@ -21,6 +21,10 @@ var productSchema = new mongoose.Schema({
         type:String,
         required:true,
     },
+    thumb:{
+        type:String,
+        đefault:'',
+    },
     price:{
         type:Number,
         required:true,
