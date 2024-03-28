@@ -92,7 +92,7 @@ const DailyDeal = () => {
             "https://nayemdevs.com/wp-content/uploads/2020/03/default-product-image.png"
           }
           alt=""
-          className="w-full object-containn py-16"
+          className="w-full object-containn py-8"
         />
         <span className="line-clamp-1 text-center">{dailyDeal?.title}</span>
         <span className="flex h-4">

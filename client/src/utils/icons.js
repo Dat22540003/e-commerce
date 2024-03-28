@@ -10,6 +10,7 @@ import {
   AiFillHeart
 } from "react-icons/ai";
 import { IoMenu } from "react-icons/io5";
+import { GrFormNext } from "react-icons/gr";
 
 const icons = {
   RiPhoneFill,
@@ -22,6 +23,7 @@ const icons = {
   AiFillEye,
   IoMenu,
   AiFillHeart,
+  GrFormNext,
 };
 
 export default icons;

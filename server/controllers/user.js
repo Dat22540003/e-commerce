@@ -7,28 +7,82 @@ const {
 const jwt = require("jsonwebtoken");
 const sendMail = require("../utils/sendMail");
 const crypto = require("crypto");
+const makeToken = require("uniqid");
 
 // Register user
+// const register = asyncHandler(async (req, res) => {
+//   const { firstname, lastname, email, password } = req.body;
+//   if (!email || !password || !firstname || !lastname) {
+//     return res.status(400).json({
+//       success: false,
+//       message: 'Missing input',
+//     });
+//   }
+
+//   const user = await User.findOne({ email });
+//   if (user) {
+//     throw new Error('User already exists');
+//   } else {
+//     const newUser = await User.create(req.body);
+//     return res.status(200).json({
+//       success: newUser ? true : false,
+//       message: newUser
+//         ? 'Registration successful. Please go to login!'
+//         : 'Registration failed!',
+//     });
+//   }
+// });
+
 const register = asyncHandler(async (req, res) => {
-  const { firstname, lastname, email, password } = req.body;
-  if (!email || !password || !firstname || !lastname) {
+  const { email, password, firstname, lastname, mobile } = req.body;
+  if (!email || !password || !firstname || !lastname || !mobile) {
     return res.status(400).json({
       success: false,
-      mes: "Missing input",
+      message: "Missing input",
     });
   }
-
   const user = await User.findOne({ email });
   if (user) {
     throw new Error("User already exists");
   } else {
-    const newUser = await User.create(req.body);
-    return res.status(200).json({
-      success: newUser ? true : false,
-      Message: newUser
-        ? "Registration successful. Please go to login!"
-        : "Registration failed!",
+    const token = makeToken();
+    res.cookie(
+      "registerData",
+      { ...req.body, token },
+      { httpOnly: true, maxAge: 1000 * 60 * 15 }
+    );
+
+    const html = `Please click this link to complete your registration. This link will expire after 15 minutes. 
+  <a href=${process.env.URL_SERVER}/api/user/completeregister/${token}>Click here</a>`;
+
+    await sendMail({ email, html, subject: "Completing register process!" });
+
+    res.status(200).json({
+      success: true,
+      message: "Please check your email to complete registration!",
     });
+  }
+});
+
+const completeRegister = asyncHandler(async (req, res) => {
+  const cookie = req.cookies;
+  const { token } = req.params;
+  if (!cookie || cookie?.registerData?.token !== token) {
+    return res.redirect(`${process.env.CLIENT_URL}/completeregister/failed`);
+  }
+
+  const newUser = await User.create({
+    email: cookie?.registerData?.email,
+    password: cookie?.registerData?.password,
+    firstname: cookie?.registerData?.firstname,
+    lastname: cookie?.registerData?.lastname,
+    mobile: cookie?.registerData?.mobile,
+  });
+
+  if (newUser) {
+    return res.redirect(`${process.env.CLIENT_URL}/completeregister/succeed`);
+  } else {
+    return res.redirect(`${process.env.CLIENT_URL}/completeregister/failed`);
   }
 });
 
@@ -39,7 +93,7 @@ const login = asyncHandler(async (req, res) => {
   if (!email || !password) {
     return res.status(400).json({
       success: false,
-      mes: "Missing input",
+      message: "Missing input",
     });
   }
 
@@ -157,6 +211,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
   const data = {
     email,
     html,
+    subject: "Forgot password",
   };
 
   const rs = await sendMail(data);
@@ -274,7 +329,7 @@ const updateUserCart = asyncHandler(async (req, res) => {
       const response = await User.updateOne(
         { cart: { $elemMatch: alreadyAdded } },
         { $set: { "cart.$.quantity": quantity } },
-        { new: true },
+        { new: true }
       );
       return res.status(200).json({
         success: response ? true : false,
@@ -318,4 +373,5 @@ module.exports = {
   updateUserByAdmin,
   updateUserAddress,
   updateUserCart,
+  completeRegister,
 };
