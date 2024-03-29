@@ -68,6 +68,7 @@ const completeRegister = asyncHandler(async (req, res) => {
   const cookie = req.cookies;
   const { token } = req.params;
   if (!cookie || cookie?.registerData?.token !== token) {
+    res.clearCookie("registerData");
     return res.redirect(`${process.env.CLIENT_URL}/completeregister/failed`);
   }
 
@@ -78,6 +79,8 @@ const completeRegister = asyncHandler(async (req, res) => {
     lastname: cookie?.registerData?.lastname,
     mobile: cookie?.registerData?.mobile,
   });
+
+  res.clearCookie("registerData");
 
   if (newUser) {
     return res.redirect(`${process.env.CLIENT_URL}/completeregister/succeed`);
@@ -192,7 +195,7 @@ const logout = asyncHandler(async (req, res) => {
 
 // forgot password - send reset token to user's email
 const forgotPassword = asyncHandler(async (req, res) => {
-  const { email } = req.query;
+  const { email } = req.body;
   if (!email) {
     throw new Error("Please provide email");
   }
@@ -206,7 +209,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
   // Send reset token to user's email
   const html = `Please click this link to reset your password. This link will expire after 15 minutes. 
-  <a href=${process.env.URL_SERVER}/api/user/reset-password/${resetToken}>Click here</a>`;
+  <a href=${process.env.CLIENT_URL}/resetpassword/${resetToken}>Click here</a>`;
 
   const data = {
     email,
@@ -217,20 +220,20 @@ const forgotPassword = asyncHandler(async (req, res) => {
   const rs = await sendMail(data);
 
   return res.status(200).json({
-    success: true,
-    rs,
+    success: rs.response?.includes('OK') ? true : false,
+    message: rs.response?.includes('OK') ? 'Please check your email to reset password!' : 'Failed to send email',
   });
 });
 
 // reset password
 const resetPassword = asyncHandler(async (req, res) => {
-  const { password, resetToken } = req.body;
-  if (!password || !resetToken) {
+  const { password, token } = req.body;
+  if (!password || !token) {
     throw new Error("Please provide password and reset token");
   }
   const passwordResetToken = crypto
     .createHash("sha256")
-    .update(resetToken)
+    .update(token)
     .digest("hex");
   const user = await User.findOne({
     passwordResetToken,

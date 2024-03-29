@@ -1,18 +1,17 @@
 import React, { useState, useCallback } from "react";
 import login from "../../assets/login.svg";
 import { InputField, Button } from "../../components";
-import { apiRegister, apiLogin } from "../../apis";
+import { apiRegister, apiLogin, apiForgotPassword } from "../../apis";
 import Swal from "sweetalert2";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import path from "../../utils/path";
-import {register} from '../../store/user/userSlice'
-import {useDispatch} from 'react-redux'
+import { register } from "../../store/user/userSlice";
+import { useDispatch } from "react-redux";
+import { toast } from "react-toastify";
 
 const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const location = useLocation();
-  console.log(location);
   const [payload, setPayload] = useState({
     email: "",
     password: "",
@@ -20,6 +19,10 @@ const Login = () => {
     lastname: "",
     mobile: "",
   });
+
+  const [email, setEmail] = useState("");
+
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
 
   const [isRegister, setIsRegister] = useState(false);
 
@@ -33,6 +36,15 @@ const Login = () => {
     });
   };
 
+  const handleForgotPassword = async () => {
+    const response = await apiForgotPassword({ email });
+    console.log(response);
+    if(response?.success){
+      toast.success(response?.message, {theme: 'colored'});
+    } else {
+      toast.warning(response?.message, {theme: 'colored'});
+    }
+  };
   const handleSunbmit = useCallback(async () => {
     const { firstname, lastname, mobile, ...data } = payload;
     if (isRegister) {
@@ -51,7 +63,13 @@ const Login = () => {
     } else {
       const loginRes = await apiLogin(data);
       if (loginRes?.success) {
-        dispatch(register({isLoggedIn: true, userData: loginRes.userData, token: loginRes.accessToken}))
+        dispatch(
+          register({
+            isLoggedIn: true,
+            userData: loginRes.userData,
+            token: loginRes.accessToken,
+          })
+        );
         navigate(`/${path.HOME}`);
       } else {
         Swal.fire("Oop!", loginRes?.message, "error");
@@ -60,6 +78,33 @@ const Login = () => {
   }, [payload, isRegister]);
   return (
     <div className="w-screen h-screen relative">
+      {isForgotPassword && (
+        <div className="animate-slide-right absolute top-0 bottom-0 left-0 right-0 bg-white flex flex-col items-center py-8 z-50">
+          <div className="flex flex-col gap-4">
+            <label htmlFor="email">Enter your email</label>
+            <input
+              type="email"
+              id="email"
+              className="w-[800px] border-b pb-2 outline-none placeholder:text-sm"
+              placeholder="Exp: email@gmail.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+
+            <div className="flex items-center justify-end w-full gap-4">
+              <Button 
+              name="Submit" 
+              handleOnClick={handleForgotPassword} 
+              style='my-2 px-4 py-2 rounded-md text-white bg-blue-500 text-semibold'
+              />
+              <Button 
+              name="Back" 
+              handleOnClick={() => {setIsForgotPassword(false)}} 
+              />
+            </div>
+          </div>
+        </div>
+      )}
       <img src={login} alt="" className="w-full h-full object-cover" />
       <div className="absolute flex items-center justify-center top-0 bottom-0 w-[62%]">
         <div className="flex items-center justify-center">
@@ -111,7 +156,7 @@ const Login = () => {
 
             <div className="flex items-center justify-between my-2 w-full text-sm">
               {!isRegister && (
-                <span className="text-blue-500 hover:underline cursor-pointer">
+                <span className="text-blue-500 hover:underline cursor-pointer" onClick={() => {setIsForgotPassword(true)}}>
                   Forgot your password?
                 </span>
               )}
