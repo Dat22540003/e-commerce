@@ -18,8 +18,8 @@ const Home = () => {
   const {isLoggedIn, current} = useSelector(state => state.user)
 
   return (
-    <div>
-      <div className="w-main flex">
+    <>
+      <div className="w-main flex mt-6">
         <div className="flex flex-col gap-5 w-[25%] flex-auto">
           <Sidebar />
           <DailyDeal />
@@ -32,7 +32,7 @@ const Home = () => {
       <div className="my-8">
         <FeaturedProduct />
       </div>
-      <div className="my-8 w-full">
+      <div className="my-8 w-main">
         <h3 className="text-[20px] font-semibold py-[15px] border-b-2 border-main">
           NEW ARRIVALS
         </h3>
@@ -40,7 +40,7 @@ const Home = () => {
           <CustomSlider products={newProducts} />
         </div>
       </div>
-      <div className="my-8 w-full">
+      <div className="my-8 w-main">
         <h3 className="text-[20px] font-semibold py-[15px] border-b-2 border-main">
           HOT COLLECTIONS
         </h3>
@@ -59,9 +59,9 @@ const Home = () => {
                     <h4 className="font-semibold uppercase">{el?.title}</h4>
                     <ul className="text-sm">
                       {el?.brand.map((item, index) => (
-                        <span className="flex gap-1 items-center text-gray-500">
+                        <span key={index} className="flex gap-1 items-center text-gray-500">
                           <GrFormNext size={14} />
-                          <li key={index}>{item}</li>
+                          <li>{item}</li>
                         </span>
                       ))}
                     </ul>
@@ -71,12 +71,12 @@ const Home = () => {
             ))}
         </div>
       </div>
-      <div className="my-8 w-full">
+      <div className="my-8 w-main">
         <h3 className="text-[20px] font-semibold py-[15px] border-b-2 border-main">
           BLOG POSTS
         </h3>
       </div>
-    </div>
+    </>
   );
 };
 

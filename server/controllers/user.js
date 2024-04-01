@@ -1,13 +1,13 @@
-const User = require("../models/user");
-const asyncHandler = require("express-async-handler");
+const User = require('../models/user');
+const asyncHandler = require('express-async-handler');
 const {
   generateAccessToken,
   generateRefreshToken,
-} = require("../middlewares/jwt");
-const jwt = require("jsonwebtoken");
-const sendMail = require("../utils/sendMail");
-const crypto = require("crypto");
-const makeToken = require("uniqid");
+} = require('../middlewares/jwt');
+const jwt = require('jsonwebtoken');
+const sendMail = require('../utils/sendMail');
+const crypto = require('crypto');
+const makeToken = require('uniqid');
 
 // Register user
 // const register = asyncHandler(async (req, res) => {
@@ -38,55 +38,59 @@ const register = asyncHandler(async (req, res) => {
   if (!email || !password || !firstname || !lastname || !mobile) {
     return res.status(400).json({
       success: false,
-      message: "Missing input",
+      message: 'Missing input',
     });
   }
   const user = await User.findOne({ email });
   if (user) {
-    throw new Error("User already exists");
+    throw new Error('User already exists');
   } else {
     const token = makeToken();
-    res.cookie(
-      "registerData",
-      { ...req.body, token },
-      { httpOnly: true, maxAge: 1000 * 60 * 15 }
-    );
+    const tokenizedEmail = btoa(email) + '@' + token;
+    const tempUser = await User.create({
+      email: tokenizedEmail,
+      password,
+      firstname,
+      lastname,
+      mobile,
+    });
 
-    const html = `Please click this link to complete your registration. This link will expire after 15 minutes. 
-  <a href=${process.env.URL_SERVER}/api/user/completeregister/${token}>Click here</a>`;
+    if (tempUser) {
+      const html = `<h2>Register code:</h2><br><blockquote>${token}</blockquote>`;
+      await sendMail({ email, html, subject: 'Completing register process!' });
+    }
 
-    await sendMail({ email, html, subject: "Completing register process!" });
+    setTimeout(async () => {
+      await User.findOneAndDelete({ email: tokenizedEmail });
+    }, [300000]);
 
-    res.status(200).json({
-      success: true,
-      message: "Please check your email to complete registration!",
+    res.json({
+      success: tempUser ? true : false,
+      message: tempUser
+        ? 'Please check your email to complete registration!'
+        : 'Registration failed!',
     });
   }
 });
 
 const completeRegister = asyncHandler(async (req, res) => {
-  const cookie = req.cookies;
   const { token } = req.params;
-  if (!cookie || cookie?.registerData?.token !== token) {
-    res.clearCookie("registerData");
-    return res.redirect(`${process.env.CLIENT_URL}/completeregister/failed`);
-  }
+  const notActiveEmail = await User.findOne({ email: new RegExp(`${token}$`) });
 
-  const newUser = await User.create({
-    email: cookie?.registerData?.email,
-    password: cookie?.registerData?.password,
-    firstname: cookie?.registerData?.firstname,
-    lastname: cookie?.registerData?.lastname,
-    mobile: cookie?.registerData?.mobile,
+  if(notActiveEmail) {
+    notActiveEmail.email = atob(notActiveEmail?.email?.split('@')[0]);
+    notActiveEmail.save();
+  }
+  res.json({
+    success: notActiveEmail ? true : false,
+    message: notActiveEmail ? 'Registration succeed' : 'Registration failed!',
   });
 
-  res.clearCookie("registerData");
-
-  if (newUser) {
-    return res.redirect(`${process.env.CLIENT_URL}/completeregister/succeed`);
-  } else {
-    return res.redirect(`${process.env.CLIENT_URL}/completeregister/failed`);
-  }
+  // if (newUser) {
+  //   return res.redirect(`${process.env.CLIENT_URL}/completeregister/succeed`);
+  // } else {
+  //   return res.redirect(`${process.env.CLIENT_URL}/completeregister/failed`);
+  // }
 });
 
 // Refresh token is used to generate new access token
@@ -96,7 +100,7 @@ const login = asyncHandler(async (req, res) => {
   if (!email || !password) {
     return res.status(400).json({
       success: false,
-      message: "Missing input",
+      message: 'Missing input',
     });
   }
 
@@ -117,7 +121,7 @@ const login = asyncHandler(async (req, res) => {
     );
 
     // Save refresh token in cookie
-    res.cookie("refreshToken", newRefreshToken, {
+    res.cookie('refreshToken', newRefreshToken, {
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
@@ -128,7 +132,7 @@ const login = asyncHandler(async (req, res) => {
       userData,
     });
   } else {
-    throw new Error("Invalid credentials!");
+    throw new Error('Invalid credentials!');
   }
 });
 
@@ -136,11 +140,11 @@ const login = asyncHandler(async (req, res) => {
 const getCurrent = asyncHandler(async (req, res) => {
   const { _id } = req.user;
   const user = await User.findById({ _id }).select(
-    "-refreshToken -password -role"
+    '-refreshToken -password -role'
   );
   return res.status(200).json({
     success: user ? true : false,
-    rs: user ? user : "User not found",
+    rs: user ? user : 'User not found',
   });
 });
 
@@ -151,7 +155,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
   // Check if refresh token exists
   if (!cookie && !cookie.refreshToken) {
-    throw new Error("No refresh token in cookie");
+    throw new Error('No refresh token in cookie');
   }
 
   const rs = await jwt.verify(cookie.refreshToken, process.env.JWT_SECRET);
@@ -163,7 +167,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     success: response ? true : false,
     newAccessToken: response
       ? generateAccessToken(response._id, response.role)
-      : "refresh token expired! Please login again!",
+      : 'refresh token expired! Please login again!',
   });
 });
 
@@ -171,25 +175,25 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 const logout = asyncHandler(async (req, res) => {
   const cookie = req.cookies;
   if (!cookie || !cookie.refreshToken) {
-    throw new Error("No refresh token in cookie");
+    throw new Error('No refresh token in cookie');
   }
 
   // Delete refresh token from database
   await User.findOneAndUpdate(
     { refreshToken: cookie.refreshToken },
-    { refreshToken: "" },
+    { refreshToken: '' },
     { new: true }
   );
 
   // Delete refresh token from cookie
-  res.clearCookie("refreshToken", {
+  res.clearCookie('refreshToken', {
     httpOnly: true,
     secure: true,
   });
 
   return res.status(200).json({
     success: true,
-    message: "Logout successful",
+    message: 'Logout successful',
   });
 });
 
@@ -197,11 +201,11 @@ const logout = asyncHandler(async (req, res) => {
 const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
   if (!email) {
-    throw new Error("Please provide email");
+    throw new Error('Please provide email');
   }
   const user = await User.findOne({ email });
   if (!user) {
-    throw new Error("User not found");
+    throw new Error('User not found');
   }
 
   const resetToken = user.createPasswordResetToken();
@@ -214,14 +218,16 @@ const forgotPassword = asyncHandler(async (req, res) => {
   const data = {
     email,
     html,
-    subject: "Forgot password",
+    subject: 'Forgot password',
   };
 
   const rs = await sendMail(data);
 
   return res.status(200).json({
     success: rs.response?.includes('OK') ? true : false,
-    message: rs.response?.includes('OK') ? 'Please check your email to reset password!' : 'Failed to send email',
+    message: rs.response?.includes('OK')
+      ? 'Please check your email to reset password!'
+      : 'Failed to send email',
   });
 });
 
@@ -229,18 +235,18 @@ const forgotPassword = asyncHandler(async (req, res) => {
 const resetPassword = asyncHandler(async (req, res) => {
   const { password, token } = req.body;
   if (!password || !token) {
-    throw new Error("Please provide password and reset token");
+    throw new Error('Please provide password and reset token');
   }
   const passwordResetToken = crypto
-    .createHash("sha256")
+    .createHash('sha256')
     .update(token)
-    .digest("hex");
+    .digest('hex');
   const user = await User.findOne({
     passwordResetToken,
     passwordResetExpires: { $gt: Date.now() },
   });
   if (!user) {
-    throw new Error("Token is invalid or expired");
+    throw new Error('Token is invalid or expired');
   }
   user.password = password;
   user.passwordResetToken = undefined;
@@ -249,13 +255,13 @@ const resetPassword = asyncHandler(async (req, res) => {
   await user.save();
   return res.status(200).json({
     success: user ? true : false,
-    message: user ? "Password reset successful" : "Password reset failed",
+    message: user ? 'Password reset successful' : 'Password reset failed',
   });
 });
 
 // Get all users
 const getUsers = asyncHandler(async (req, res) => {
-  const users = await User.find().select("-refreshToken -password -role");
+  const users = await User.find().select('-refreshToken -password -role');
   return res.status(200).json({
     success: users ? true : false,
     users,
@@ -265,7 +271,7 @@ const getUsers = asyncHandler(async (req, res) => {
 // Delete user
 const deleteUser = asyncHandler(async (req, res) => {
   const { _id } = req.query;
-  if (!_id) throw new Error("User not found");
+  if (!_id) throw new Error('User not found');
 
   const users = await User.findByIdAndDelete(_id);
   return res.status(200).json({
@@ -280,11 +286,11 @@ const deleteUser = asyncHandler(async (req, res) => {
 const updateUser = asyncHandler(async (req, res) => {
   const { _id } = req.user;
   if (!_id || Object.keys(req.body).length === 0)
-    throw new Error("Missing inputs");
+    throw new Error('Missing inputs');
 
   const user = await User.findByIdAndUpdate(_id, req.body, {
     new: true,
-  }).select("-refreshToken -password -role");
+  }).select('-refreshToken -password -role');
   return res.status(200).json({
     success: user ? true : false,
     updatedUser: user ? user : `User not found!`,
@@ -294,11 +300,11 @@ const updateUser = asyncHandler(async (req, res) => {
 // Update user by admin
 const updateUserByAdmin = asyncHandler(async (req, res) => {
   const { uid } = req.params;
-  if (Object.keys(req.body).length === 0) throw new Error("Missing inputs");
+  if (Object.keys(req.body).length === 0) throw new Error('Missing inputs');
 
   const user = await User.findByIdAndUpdate(uid, req.body, {
     new: true,
-  }).select("-refreshToken -password -role");
+  }).select('-refreshToken -password -role');
   return res.status(200).json({
     success: user ? true : false,
     updatedUser: user ? user : `User not found!`,
@@ -308,12 +314,12 @@ const updateUserByAdmin = asyncHandler(async (req, res) => {
 // Update user address
 const updateUserAddress = asyncHandler(async (req, res) => {
   const { _id } = req.user;
-  if (!req.body.address) throw new Error("Missing inputs");
+  if (!req.body.address) throw new Error('Missing inputs');
   const user = await User.findByIdAndUpdate(
     _id,
     { $push: { address: req.body.address } },
     { new: true }
-  ).select("-refreshToken -password -role");
+  ).select('-refreshToken -password -role');
   return res.status(200).json({
     success: user ? true : false,
     updatedUser: user ? user : `User not found!`,
@@ -324,14 +330,14 @@ const updateUserAddress = asyncHandler(async (req, res) => {
 const updateUserCart = asyncHandler(async (req, res) => {
   const { _id } = req.user;
   const { pid, quantity, color } = req.body;
-  if (!pid || !quantity || !color) throw new Error("Missing inputs");
-  const user = await User.findById(_id).select("cart");
+  if (!pid || !quantity || !color) throw new Error('Missing inputs');
+  const user = await User.findById(_id).select('cart');
   const alreadyAdded = user?.cart?.find((el) => el.product.toString() === pid);
   if (alreadyAdded) {
     if (alreadyAdded.color === color) {
       const response = await User.updateOne(
         { cart: { $elemMatch: alreadyAdded } },
-        { $set: { "cart.$.quantity": quantity } },
+        { $set: { 'cart.$.quantity': quantity } },
         { new: true }
       );
       return res.status(200).json({

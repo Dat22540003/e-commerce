@@ -7,7 +7,8 @@ import {
   AiFillStar,
   AiOutlineStar,
   AiFillEye,
-  AiFillHeart
+  AiFillHeart,
+  AiOutlineLogout,
 } from "react-icons/ai";
 import { IoMenu } from "react-icons/io5";
 import { GrFormNext } from "react-icons/gr";
@@ -24,6 +25,7 @@ const icons = {
   IoMenu,
   AiFillHeart,
   GrFormNext,
+  AiOutlineLogout,
 };
 
 export default icons;

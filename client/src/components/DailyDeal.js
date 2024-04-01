@@ -76,7 +76,7 @@ const DailyDeal = () => {
 
   return (
     <div className="border w-full flex-auto">
-      <div className="w-full flex items-center justify-between p-4">
+      <div className="w-full flex items-center justify-between p-2">
         <span className="flex-1 flex justify-center">
           <AiFillStar size={20} color="#dd1111" />
         </span>

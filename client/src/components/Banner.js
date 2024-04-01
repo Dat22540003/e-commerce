@@ -7,7 +7,7 @@ const Banner = () => {
       <img
         src={banner}
         alt="banner"
-        className="h-[400px] w-full object-cover"
+        className="h-[393.33px] w-main object-cover"
       />
     </div>
   );
