@@ -1,8 +1,9 @@
 const User = require('../models/user')
 const asyncHandler = require('express-async-handler')
 const { generateAccessToken, generateRefreshToken } = require('../middlewares/jwt')
-
 const jwt = require('jsonwebtoken')
+const sendMail = require('../ultils/sendMail')
+const crypto = require('crypto')
 const register = asyncHandler(async(req, res) => {
     const {email, password, firstname, lastname} = req.body
     if (!email || !password || !lastname || !firstname)
@@ -63,25 +64,87 @@ const getCurrent = asyncHandler(async(req, res) => {
         rs: user ? user : 'User not found'
     })
 })
+
 const refreshAccessToken = asyncHandler(async(req, res) => {
     // Lay token tu cookies
-    const cookie = req.cookies
+    const cookie = req.cookies;
     // Check xem co token hay khong
     if (!cookie && !cookie.refreshToken) throw new Error('No refresh token in cookies')
     // Check token co hop le hay khong
-    jwt.verify(cookie.refreshToken, process.env.JWT_SECRET, async(err, decode) => {
-        if (err) throw new Error('Invalid refresh token')
-        // Check xem token co khop voi token da luu trong db
-        const response = await User.findOne({_id: decode._id, refreshToken: cookie.refreshToken})
-        return res.status(200).json({
-            sucess: response ? true : false,
-            newAccessToken: response ? generateAccessToken(response._id, response.role) : 'Refresh token not matched'
-        })
+    const rs = await jwt.verify(cookie.refreshToken, process.env.JWT_SECRET);
+    const response = User.findOne({_id: rs._id, refreshToken: cookie.refreshToken});
+
+    return res.status(200).json({
+        sucess: response ? true : false,
+        newAccessToken: response ? generateAccessToken(response._id, response.role) : 'Refresh token not matched'
     })
+})
+const logout = asyncHandler(async(req, res) => {
+    const cookie = req.cookies
+    if (!cookie || !cookie.refreshToken) throw new Error('No refresh token in cookies')
+    // Xoa refresh token o db
+    await User.findOneAndUpdate({refreshToken: cookie.refreshToken}, {refreshToken: ''}, {new: true})
+    //X Xoa refresh token o cookie trinh duyet
+    res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: true
+    })
+    return res.status(200).json({
+        sucess: true,
+        mes: 'Logout is done'
+    })
+})
+// Client gui email
+// Server check mail co hop le hay khong => Gui mail + kem theo link (password change token)
+// Client check mail => click link
+// Client gui api kem theo token
+// Check token co giong voi token ma server gui mail hay khong
+// Change password
+
+const forgotPassword = asyncHandler(async(req, res) => {
+    const {email} = req.query
+    if (!email) throw new Error('Missing email')
+    const user = await User.findOne({email})
+    if (!user) throw new Error('User not found')
+    const resetToken = user.createPasswordChangedToken()
+    await user.save()
+
+    const html = `Xin vui lòng click vào link dưới đây để thay đổi mật khẩu của bạn. Link này sẽ hết hạn sau 15 phút kể từ bây giờ. <a href = ${process.env.URL_SERVER}/api/user/reset-password/${resetToken}>Click here</a>`
+    const data = {
+        email,
+        html
+    }
+    const rs = await sendMail(data)
+    return res.status(200).json({
+        sucess: true,
+        rs
+
+    })
+
+})
+const resetPassword = asyncHandler(async(req, res) => {
+    const {password, token} = req.body
+    if(!password || !token) throw new Error('Missing inputs')
+    const passwordResetToken = crypto.createHash('sha256').update(token).digest('hex')
+    const user = await User.findOne({passwordResetToken, passwordResetExpire: {$gt: Date.now()}})
+    if (!user) throw new Error('Invalid reset token')
+    user.password = password
+    user.passwordResetToken = undefined
+    user.passwordChangedAt = Date.now()
+    user.passwordResetExpire = undefined
+    await user.save()
+    return res.status(200).json({
+        sucess: user ? true: false,
+        mes: user? 'Updated password': 'Something went wrong'
+    })
+
 })
 module.exports = {
     register,
     login,
     getCurrent,
-    refreshAccessToken
+    refreshAccessToken,
+    logout,
+    forgotPassword, 
+    resetPassword
 }
