@@ -1,7 +1,14 @@
 import React, { memo, useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { apiGetProduct } from "../../apis";
-import { Breadcrumb, Button, SelectQuantity } from "../../components";
+import { apiGetProduct, apiGetProducts } from "../../apis";
+import {
+  Breadcrumb,
+  Button,
+  SelectQuantity,
+  ProductExtraInfoItem,
+  ProductInformation,
+  CustomSlider,
+} from "../../components";
 import Slider from "react-slick";
 import ReactImageMagnify from "react-image-magnify";
 import {
@@ -9,6 +16,7 @@ import {
   formatPrice,
   renderStarFromNumber,
 } from "../../utils/helpers";
+import { productExtraInfomation } from "../../utils/contants";
 
 const settings = {
   dots: false,
@@ -23,7 +31,9 @@ const ProductDetail = () => {
 
   const [product, setProduct] = useState(null);
 
-  const [quantity, setQuantity] = useState(1)
+  const [quantity, setQuantity] = useState(1);
+
+  const [relatedProducts, setRelatedProducts] = useState(null);
 
   const fetchProductData = async () => {
     const response = await apiGetProduct(pid);
@@ -32,31 +42,45 @@ const ProductDetail = () => {
     }
   };
 
+  const fetchProducts = async () => {
+    const response = await apiGetProducts({ category });
+    if (response.success) {
+      setRelatedProducts(response.productData);
+    }
+  };
+
   useEffect(() => {
     if (pid) {
       fetchProductData();
+      fetchProducts();
     }
   }, [pid]);
 
-  const handleQuantity = useCallback((number) => {
-    if(!Number(number) || Number(number) < 1) {
-      return;
-    } else{
-      setQuantity(Number(number));
-    }
-  }, [quantity]);
+  const handleQuantity = useCallback(
+    (number) => {
+      if (!Number(number) || Number(number) < 1) {
+        return;
+      } else {
+        setQuantity(Number(number));
+      }
+    },
+    [quantity]
+  );
 
-  const handleChangeQuantity = useCallback((flag) => {
-    if(flag === 'minus' && quantity === 1) {
-      return;
-    }
-    if(flag === 'minus') {
-      setQuantity(prev => +prev - 1)
-    }
-    if(flag === 'plus') {
-      setQuantity(prev => +prev + 1)
-    }
-  }, [quantity]);
+  const handleChangeQuantity = useCallback(
+    (flag) => {
+      if (flag === "minus" && quantity === 1) {
+        return;
+      }
+      if (flag === "minus") {
+        setQuantity((prev) => +prev - 1);
+      }
+      if (flag === "plus") {
+        setQuantity((prev) => +prev + 1);
+      }
+    },
+    [quantity]
+  );
 
   return (
     <div className="w-full">
@@ -87,7 +111,7 @@ const ProductDetail = () => {
           <div className="w-[458px]">
             <Slider {...settings} className="image-slider">
               {product?.images?.map((el, index) => (
-                <div key={index} className="flex w-full justify-between">
+                <div key={index} className="flex w-full justify-between mx-[3px]">
                   <img
                     src={el}
                     alt="sub-product"
@@ -119,19 +143,40 @@ const ProductDetail = () => {
             ))}
           </ul>
           <div className="flex flex-col gap-8">
-            <SelectQuantity 
-            quantity={quantity} 
-            handleQuantity={handleQuantity}
-            handleChangeQuantity={handleChangeQuantity}
-            />
-            <Button fw>
-              Add to cart
-            </Button>
+            <div className="flex items-center gap-4">
+              <span className="font-semibold">Quantity</span>
+              <SelectQuantity
+                quantity={quantity}
+                handleQuantity={handleQuantity}
+                handleChangeQuantity={handleChangeQuantity}
+              />
+            </div>
+            <Button fw>Add to cart</Button>
           </div>
         </div>
-        <div className="w-1/5">infomation</div>
+        <div className="w-1/5">
+          {productExtraInfomation?.map((el) => (
+            <ProductExtraInfoItem
+              key={el.id}
+              icon={el.icon}
+              title={el.title}
+              sub={el.sub}
+            />
+          ))}
+        </div>
       </div>
-      <div className="h-[500px] w-full"></div>
+      <div className="w-main m-auto mt-8">
+        <ProductInformation />
+      </div>
+      <div className="w-main m-auto mt-8">
+        <h3 className="text-[20px] font-semibold py-[15px] border-b-2 border-main">
+          OTHER CUSTOMERS ALSO BUY
+        </h3>
+        <div className="mt-4 mx-[-10px]">
+          <CustomSlider normal={true} products={relatedProducts} />
+        </div>
+      </div>
+      <div className="h-[100px] w-full"></div>
     </div>
   );
 };

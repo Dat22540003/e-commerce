@@ -10,7 +10,7 @@ const settings = {
   slidesToScroll: 1,
 };
 
-const CustomSlider = ({ products, activeTab }) => {
+const CustomSlider = ({ products, activeTab, normal }) => {
   return (
     <>
       {products && (
@@ -21,6 +21,7 @@ const CustomSlider = ({ products, activeTab }) => {
               pid={el._id}
               productData={el}
               isNew={activeTab === 2 ? true : false}
+              normal={normal}
             />
           ))}
         </Slider>

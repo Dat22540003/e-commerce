@@ -42,12 +42,25 @@ const getProducts = asyncHandler(async (req, res) => {
     (matchedEl) => `$${matchedEl}`
   );
   const formattedQueries = JSON.parse(queryString);
+  let colorQueryObject = {};
 
   // Filtering
   if (queries?.title) {
     formattedQueries.title = { $regex: queries.title, $options: "i" };
   }
-  let queryCommand = Product.find(formattedQueries);
+  if (queries?.category) {
+    formattedQueries.category = { $regex: queries.category, $options: "i" };
+  }
+  if (queries?.color) {
+    delete formattedQueries.color;
+    const colorArr = queries.color?.split(",");
+    const colorQuery = colorArr.map((el) => ({
+      color: { $regex: el, $options: "i" },
+    }));
+    colorQueryObject = { $or: colorQuery };
+  }
+  const q = { ...colorQueryObject, ...formattedQueries };
+  let queryCommand = Product.find(q);
 
   // Sorting
   if (req.query.sort) {
@@ -74,7 +87,7 @@ const getProducts = asyncHandler(async (req, res) => {
     const products = await queryCommand.exec();
     if (!products || products.length === 0)
       throw new Error("Cannot get products!");
-    const count = await Product.find(formattedQueries).countDocuments();
+    const count = await Product.find(q).countDocuments();
     return res.status(200).json({
       success: products ? true : false,
       count,
@@ -160,7 +173,7 @@ const uploadProductImages = asyncHandler(async (req, res) => {
   const respone = await Product.findByIdAndUpdate(
     pid,
     { $push: { images: { $each: req.files.map((el) => el.path) } } },
-    { new: true },
+    { new: true }
   );
   return res.status(200).json({
     success: respone ? true : false,
