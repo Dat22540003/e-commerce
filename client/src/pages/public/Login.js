@@ -212,10 +212,11 @@ const Login = () => {
             />
 
             <Button
-              name={isRegister ? 'Register' : 'Login'}
               handleOnClick={handleSunbmit}
               fw
-            />
+            > 
+              {isRegister ? 'Register' : 'Login'}
+            </Button>
 
             <div className='flex items-center justify-between my-2 w-full text-sm'>
               {!isRegister && (

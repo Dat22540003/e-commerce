@@ -31,14 +31,19 @@ const ProductDetail = () => {
 
   const [product, setProduct] = useState(null);
 
+  const [currentImage, setCurrentImage] = useState(null);
+
   const [quantity, setQuantity] = useState(1);
 
   const [relatedProducts, setRelatedProducts] = useState(null);
+
+  const [updateVote, setUpdateVote] = useState(false)
 
   const fetchProductData = async () => {
     const response = await apiGetProduct(pid);
     if (response.success) {
       setProduct(response.productData);
+      setCurrentImage(response?.productData?.thumb);
     }
   };
 
@@ -54,7 +59,18 @@ const ProductDetail = () => {
       fetchProductData();
       fetchProducts();
     }
+    window.scrollTo(0, 0);
   }, [pid]);
+
+  useEffect(() => {
+    if (pid) {
+      fetchProductData();
+    }
+  }, [updateVote]);
+
+  const reRenderVote = useCallback(() => {
+    setUpdateVote(!updateVote)
+  }, [updateVote]);
 
   const handleQuantity = useCallback(
     (number) => {
@@ -82,6 +98,11 @@ const ProductDetail = () => {
     [quantity]
   );
 
+  const handleClickImage = (e, el) => {
+    e.stopPropagation();
+    setCurrentImage(el);
+  };
+
   return (
     <div className="w-full">
       <div className="h-[81px] bg-gray-100  flex items-center justify-center">
@@ -97,13 +118,15 @@ const ProductDetail = () => {
               {...{
                 smallImage: {
                   alt: "Wristwatch by Ted Baker London",
-                  isFluidWidth: true,
-                  src: product?.thumb,
+                  // isFluidWidth: true,
+                  src: currentImage,
+                  width: 456,
+                  height: 456,
                 },
                 largeImage: {
-                  src: product?.images,
+                  src: currentImage,
                   width: 1800,
-                  height: 1500,
+                  height: 1800,
                 },
               }}
             />
@@ -111,11 +134,15 @@ const ProductDetail = () => {
           <div className="w-[458px]">
             <Slider {...settings} className="image-slider">
               {product?.images?.map((el, index) => (
-                <div key={index} className="flex w-full justify-between mx-[3px]">
+                <div
+                  key={index}
+                  className="flex w-full justify-between mx-[3px]"
+                >
                   <img
                     src={el}
                     alt="sub-product"
-                    className="h-[143px] w-[143px] object-contain border"
+                    className="h-[143px] w-[143px] object-contain border cursor-pointer"
+                    onClick={(e) => handleClickImage(e, el)}
                   />
                 </div>
               ))}
@@ -166,7 +193,13 @@ const ProductDetail = () => {
         </div>
       </div>
       <div className="w-main m-auto mt-8">
-        <ProductInformation />
+        <ProductInformation
+          totalRating={product?.totalRating}
+          ratings={product?.ratings}
+          productName={product?.title}
+          pid={product?._id}
+          reRenderVote={reRenderVote}
+        />
       </div>
       <div className="w-main m-auto mt-8">
         <h3 className="text-[20px] font-semibold py-[15px] border-b-2 border-main">
