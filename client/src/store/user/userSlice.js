@@ -8,7 +8,7 @@ export const userSlice = createSlice({
     current: null,
     token: null,
     isLoading: false,
-    message: '',
+    message: "",
   },
   reducers: {
     login: (state, action) => {
@@ -17,10 +17,13 @@ export const userSlice = createSlice({
     },
     logout: (state, action) => {
       state.isLoggedIn = false;
+      state.current = null;
       state.token = null;
+      state.isLoading = false;
+      state.message = "";
     },
     clearMessage: (state) => {
-      state.message = '';
+      state.message = "";
     },
   },
   extraReducers: (builder) => {
@@ -39,7 +42,7 @@ export const userSlice = createSlice({
       state.current = null;
       state.isLoggedIn = false;
       state.token = null;
-      state.message = 'Please login to continue';
+      state.message = "Please login to continue";
     });
   },
 });

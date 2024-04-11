@@ -1,13 +1,14 @@
-const User = require('../models/user');
-const asyncHandler = require('express-async-handler');
+const User = require("../models/user");
+const asyncHandler = require("express-async-handler");
 const {
   generateAccessToken,
   generateRefreshToken,
-} = require('../middlewares/jwt');
-const jwt = require('jsonwebtoken');
-const sendMail = require('../utils/sendMail');
-const crypto = require('crypto');
-const makeToken = require('uniqid');
+} = require("../middlewares/jwt");
+const jwt = require("jsonwebtoken");
+const sendMail = require("../utils/sendMail");
+const crypto = require("crypto");
+const makeToken = require("uniqid");
+const { users } = require("../utils/constant");
 
 // Register user
 // const register = asyncHandler(async (req, res) => {
@@ -38,15 +39,15 @@ const register = asyncHandler(async (req, res) => {
   if (!email || !password || !firstname || !lastname || !mobile) {
     return res.status(400).json({
       success: false,
-      message: 'Missing input',
+      message: "Missing input",
     });
   }
   const user = await User.findOne({ email });
   if (user) {
-    throw new Error('User already exists');
+    throw new Error("User already exists");
   } else {
     const token = makeToken();
-    const tokenizedEmail = btoa(email) + '@' + token;
+    const tokenizedEmail = btoa(email) + "@" + token;
     const tempUser = await User.create({
       email: tokenizedEmail,
       password,
@@ -57,7 +58,7 @@ const register = asyncHandler(async (req, res) => {
 
     if (tempUser) {
       const html = `<h2>Register code:</h2><br><blockquote>${token}</blockquote>`;
-      await sendMail({ email, html, subject: 'Completing register process!' });
+      await sendMail({ email, html, subject: "Completing register process!" });
     }
 
     setTimeout(async () => {
@@ -67,8 +68,8 @@ const register = asyncHandler(async (req, res) => {
     res.json({
       success: tempUser ? true : false,
       message: tempUser
-        ? 'Please check your email to complete registration!'
-        : 'Registration failed!',
+        ? "Please check your email to complete registration!"
+        : "Registration failed!",
     });
   }
 });
@@ -77,13 +78,13 @@ const completeRegister = asyncHandler(async (req, res) => {
   const { token } = req.params;
   const notActiveEmail = await User.findOne({ email: new RegExp(`${token}$`) });
 
-  if(notActiveEmail) {
-    notActiveEmail.email = atob(notActiveEmail?.email?.split('@')[0]);
+  if (notActiveEmail) {
+    notActiveEmail.email = atob(notActiveEmail?.email?.split("@")[0]);
     notActiveEmail.save();
   }
   res.json({
     success: notActiveEmail ? true : false,
-    message: notActiveEmail ? 'Registration succeed' : 'Registration failed!',
+    message: notActiveEmail ? "Registration succeed" : "Registration failed!",
   });
 
   // if (newUser) {
@@ -100,7 +101,7 @@ const login = asyncHandler(async (req, res) => {
   if (!email || !password) {
     return res.status(400).json({
       success: false,
-      message: 'Missing input',
+      message: "Missing input",
     });
   }
 
@@ -121,7 +122,7 @@ const login = asyncHandler(async (req, res) => {
     );
 
     // Save refresh token in cookie
-    res.cookie('refreshToken', newRefreshToken, {
+    res.cookie("refreshToken", newRefreshToken, {
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
@@ -132,19 +133,17 @@ const login = asyncHandler(async (req, res) => {
       userData,
     });
   } else {
-    throw new Error('Invalid credentials!');
+    throw new Error("Invalid credentials!");
   }
 });
 
 // Get current user
 const getCurrent = asyncHandler(async (req, res) => {
   const { _id } = req.user;
-  const user = await User.findById({ _id }).select(
-    '-refreshToken -password -role'
-  );
+  const user = await User.findById({ _id }).select("-refreshToken -password");
   return res.status(200).json({
     success: user ? true : false,
-    rs: user ? user : 'User not found',
+    rs: user ? user : "User not found",
   });
 });
 
@@ -155,7 +154,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
   // Check if refresh token exists
   if (!cookie && !cookie.refreshToken) {
-    throw new Error('No refresh token in cookie');
+    throw new Error("No refresh token in cookie");
   }
 
   const rs = await jwt.verify(cookie.refreshToken, process.env.JWT_SECRET);
@@ -167,7 +166,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     success: response ? true : false,
     newAccessToken: response
       ? generateAccessToken(response._id, response.role)
-      : 'refresh token expired! Please login again!',
+      : "refresh token expired! Please login again!",
   });
 });
 
@@ -175,25 +174,25 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 const logout = asyncHandler(async (req, res) => {
   const cookie = req.cookies;
   if (!cookie || !cookie.refreshToken) {
-    throw new Error('No refresh token in cookie');
+    throw new Error("No refresh token in cookie");
   }
 
   // Delete refresh token from database
   await User.findOneAndUpdate(
     { refreshToken: cookie.refreshToken },
-    { refreshToken: '' },
+    { refreshToken: "" },
     { new: true }
   );
 
   // Delete refresh token from cookie
-  res.clearCookie('refreshToken', {
+  res.clearCookie("refreshToken", {
     httpOnly: true,
     secure: true,
   });
 
   return res.status(200).json({
     success: true,
-    message: 'Logout successful',
+    message: "Logout successful",
   });
 });
 
@@ -201,11 +200,11 @@ const logout = asyncHandler(async (req, res) => {
 const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
   if (!email) {
-    throw new Error('Please provide email');
+    throw new Error("Please provide email");
   }
   const user = await User.findOne({ email });
   if (!user) {
-    throw new Error('User not found');
+    throw new Error("User not found");
   }
 
   const resetToken = user.createPasswordResetToken();
@@ -218,16 +217,16 @@ const forgotPassword = asyncHandler(async (req, res) => {
   const data = {
     email,
     html,
-    subject: 'Forgot password',
+    subject: "Forgot password",
   };
 
   const rs = await sendMail(data);
 
   return res.status(200).json({
-    success: rs.response?.includes('OK') ? true : false,
-    message: rs.response?.includes('OK')
-      ? 'Please check your email to reset password!'
-      : 'Failed to send email',
+    success: rs.response?.includes("OK") ? true : false,
+    message: rs.response?.includes("OK")
+      ? "Please check your email to reset password!"
+      : "Failed to send email",
   });
 });
 
@@ -235,18 +234,18 @@ const forgotPassword = asyncHandler(async (req, res) => {
 const resetPassword = asyncHandler(async (req, res) => {
   const { password, token } = req.body;
   if (!password || !token) {
-    throw new Error('Please provide password and reset token');
+    throw new Error("Please provide password and reset token");
   }
   const passwordResetToken = crypto
-    .createHash('sha256')
+    .createHash("sha256")
     .update(token)
-    .digest('hex');
+    .digest("hex");
   const user = await User.findOne({
     passwordResetToken,
     passwordResetExpires: { $gt: Date.now() },
   });
   if (!user) {
-    throw new Error('Token is invalid or expired');
+    throw new Error("Token is invalid or expired");
   }
   user.password = password;
   user.passwordResetToken = undefined;
@@ -255,29 +254,86 @@ const resetPassword = asyncHandler(async (req, res) => {
   await user.save();
   return res.status(200).json({
     success: user ? true : false,
-    message: user ? 'Password reset successful' : 'Password reset failed',
+    message: user ? "Password reset successful" : "Password reset failed",
   });
 });
 
 // Get all users
 const getUsers = asyncHandler(async (req, res) => {
-  const users = await User.find().select('-refreshToken -password -role');
-  return res.status(200).json({
-    success: users ? true : false,
-    users,
-  });
+  const queries = { ...req.query };
+
+  // Separate the specified fields from queries
+  const excludedFields = ["page", "sort", "limit", "fields"];
+  excludedFields.forEach((el) => delete queries[el]);
+
+  // Format the queries to be used in mongoose
+  let queryString = JSON.stringify(queries);
+  queryString = queryString.replace(
+    /\b(gte|gt|lt|lte)\b/g,
+    (matchedEl) => `$${matchedEl}`
+  );
+
+  const formattedQueries = JSON.parse(queryString);
+
+  // Filtering
+  if (queries?.name) {
+    formattedQueries.name = { $regex: queries.name, $options: "i" };
+  }
+
+  if (req.query.q) {
+    delete formattedQueries.q;
+    formattedQueries['$or'] = [
+      { firstname: { $regex: req.query.q, $options: "i" } },
+      { lastname: { $regex: req.query.q, $options: "i" } },
+      { email: { $regex: req.query.q, $options: "i" } },
+    ];
+  }
+
+  let queryCommand = User.find(formattedQueries);
+
+  // Sorting
+  if (req.query.sort) {
+    const sortBy = req.query.sort.split(",").join(" ");
+    queryCommand = queryCommand.sort(sortBy);
+  }
+
+  // Field limiting
+  if (req.query.fields) {
+    const fields = req.query.fields.split(",").join(" ");
+    queryCommand = queryCommand.select(fields);
+  }
+
+  // Pagination
+  // - litmit: number of results per API call
+  // - skip: number of results to skip
+  const page = +req.query.page || 1;
+  const limit = +req.query.limit || process.env.PAGINATION_LIMIT;
+  const skip = (page - 1) * limit;
+  queryCommand = queryCommand.skip(skip).limit(limit);
+
+  // Execute the query
+  try {
+    const users = await queryCommand.exec();
+    if (!users || users.length === 0) throw new Error("Cannot get users!");
+    const count = await User.find(formattedQueries).countDocuments();
+    return res.status(200).json({
+      success: users ? true : false,
+      count,
+      users: users ? users : "Cannot get users!",
+    });
+  } catch (error) {
+    throw new Error(error.message);
+  }
 });
 
 // Delete user
 const deleteUser = asyncHandler(async (req, res) => {
-  const { _id } = req.query;
-  if (!_id) throw new Error('User not found');
-
-  const users = await User.findByIdAndDelete(_id);
+  const { uid } = req.params;
+  const response = await User.findByIdAndDelete(uid);
   return res.status(200).json({
-    success: users ? true : false,
-    deletedUser: users
-      ? `User with email ${users.email} has been deleted`
+    success: response ? true : false,
+    message: response
+      ? `User with email ${response.email} has been deleted`
       : `User not found!`,
   });
 });
@@ -286,11 +342,11 @@ const deleteUser = asyncHandler(async (req, res) => {
 const updateUser = asyncHandler(async (req, res) => {
   const { _id } = req.user;
   if (!_id || Object.keys(req.body).length === 0)
-    throw new Error('Missing inputs');
+    throw new Error("Missing inputs");
 
   const user = await User.findByIdAndUpdate(_id, req.body, {
     new: true,
-  }).select('-refreshToken -password -role');
+  }).select("-refreshToken -password -role");
   return res.status(200).json({
     success: user ? true : false,
     updatedUser: user ? user : `User not found!`,
@@ -300,26 +356,26 @@ const updateUser = asyncHandler(async (req, res) => {
 // Update user by admin
 const updateUserByAdmin = asyncHandler(async (req, res) => {
   const { uid } = req.params;
-  if (Object.keys(req.body).length === 0) throw new Error('Missing inputs');
+  if (Object.keys(req.body).length === 0) throw new Error("Missing inputs");
 
   const user = await User.findByIdAndUpdate(uid, req.body, {
     new: true,
-  }).select('-refreshToken -password -role');
+  }).select("-refreshToken -password -role");
   return res.status(200).json({
     success: user ? true : false,
-    updatedUser: user ? user : `User not found!`,
+    message: user ? 'Updated' : 'Something went wrong!',
   });
 });
 
 // Update user address
 const updateUserAddress = asyncHandler(async (req, res) => {
   const { _id } = req.user;
-  if (!req.body.address) throw new Error('Missing inputs');
+  if (!req.body.address) throw new Error("Missing inputs");
   const user = await User.findByIdAndUpdate(
     _id,
     { $push: { address: req.body.address } },
     { new: true }
-  ).select('-refreshToken -password -role');
+  ).select("-refreshToken -password -role");
   return res.status(200).json({
     success: user ? true : false,
     updatedUser: user ? user : `User not found!`,
@@ -330,14 +386,14 @@ const updateUserAddress = asyncHandler(async (req, res) => {
 const updateUserCart = asyncHandler(async (req, res) => {
   const { _id } = req.user;
   const { pid, quantity, color } = req.body;
-  if (!pid || !quantity || !color) throw new Error('Missing inputs');
-  const user = await User.findById(_id).select('cart');
+  if (!pid || !quantity || !color) throw new Error("Missing inputs");
+  const user = await User.findById(_id).select("cart");
   const alreadyAdded = user?.cart?.find((el) => el.product.toString() === pid);
   if (alreadyAdded) {
     if (alreadyAdded.color === color) {
       const response = await User.updateOne(
         { cart: { $elemMatch: alreadyAdded } },
-        { $set: { 'cart.$.quantity': quantity } },
+        { $set: { "cart.$.quantity": quantity } },
         { new: true }
       );
       return res.status(200).json({
@@ -368,6 +424,14 @@ const updateUserCart = asyncHandler(async (req, res) => {
   }
 });
 
+const createUsers = asyncHandler(async (req, res) => {
+  const response = await User.create(users);
+  return res.status(200).json({
+    success: response ? true : false,
+    users: response ? response : `User not found!`,
+  });
+});
+
 module.exports = {
   register,
   login,
@@ -383,4 +447,5 @@ module.exports = {
   updateUserAddress,
   updateUserCart,
   completeRegister,
+  createUsers,
 };

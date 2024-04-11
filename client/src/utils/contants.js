@@ -32,7 +32,6 @@ export const navigation = [
 
 const { BsShieldShaded, RiTruckFill, AiFillGift, BsFillReplyFill, FaTty } =
   icons;
-
 export const productExtraInfomation = [
   {
     id: 1,
@@ -190,5 +189,69 @@ export const voteOptions = [
   {
     id: 5,
     text: 'Perfect'
+  },
+]
+
+const {AiOutlineDashboard, MdOutlineGroup, RiProductHuntLine, RiBillLine} = icons;
+export const adminSidebar = [
+  {
+    id: 1,
+    type: 'SINGLE',
+    text: 'Dashboard',
+    path: `/${path.ADMIN}/${path.DASHBOARD}`,
+    icon: <AiOutlineDashboard size={20}/>
+  },
+  {
+    id: 2,
+    type: 'SINGLE',
+    text: 'Manage users',
+    path: `/${path.ADMIN}/${path.MANAGE_USER}`,
+    icon: <MdOutlineGroup size={20}/>
+  },
+  {
+    id: 3,
+    type: 'PARENT',
+    text: 'Manage products',
+    icon: <RiProductHuntLine size={20}/>,
+    subMenu:[
+      {
+        text: 'Create product',
+        path:  `/${path.ADMIN}/${path.CREATE_PRODUCT}`
+      },
+      {
+        text: 'Manage products',
+        path:  `/${path.ADMIN}/${path.MANAGE_PRODUCT}`
+      }
+    ]
+  },
+  {
+    id: 4,
+    type: 'SINGLE',
+    text: 'Manage orders',
+    path: `/${path.ADMIN}/${path.MANAGE_ORDER}`,
+    icon: <RiBillLine size={20}/>
+  },
+
+]
+
+export const roles = [
+  {
+    code: 1999,
+    value: 'Admin',
+  },
+  {
+    code: 1998,
+    value: 'User',
+  },
+]
+
+export const blockStatus = [
+  {
+    code: true,
+    value: 'Blocked',
+  },
+  {
+    code: false,
+    value: 'Active',
   },
 ]

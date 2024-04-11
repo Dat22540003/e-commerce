@@ -40,17 +40,9 @@ const Products = () => {
   const { category } = useParams();
 
   useEffect(() => {
-    let param = [];
-    const queries = {};
     let priceQuery = {};
 
-    for (let i of params.entries()) {
-      param.push(i);
-    }
-
-    for (let i of param) {
-      queries[i[0]] = i[1];
-    }
+    const queries = Object.fromEntries([...params]);
 
     if (queries.from && queries.to) {
       priceQuery = {
