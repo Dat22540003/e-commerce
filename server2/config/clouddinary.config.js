@@ -12,9 +12,8 @@ const storage = new CloudinaryStorage({
   cloudinary,
   allowedFormats: ['jpg', 'png'],
   params: {
-    forder: 'cuahangdientu'
+    folder: 'cuahangdientu'
   }
-    
 });
 
 const uploadCloud = multer({ storage });
