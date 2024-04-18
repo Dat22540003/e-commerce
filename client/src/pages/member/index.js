@@ -1,2 +1,5 @@
 export {default as MemberLayout} from './MemberLayout'
 export {default as Personal} from './Personal'
+export {default as WhishList} from './WhishList'
+export {default as BuyHistory} from './BuyHistory'
+export {default as MyCart} from './MyCart'

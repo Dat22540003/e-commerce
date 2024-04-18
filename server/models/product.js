@@ -23,7 +23,7 @@ var productSchema = new mongoose.Schema({
     },
     thumb:{
         type:String,
-        đefault:'',
+        default:'',
     },
     price:{
         type:Number,
@@ -60,6 +60,16 @@ var productSchema = new mongoose.Schema({
         type:Number,
         default:0,
     },
+    variant:[
+        {
+            color: {type: String},
+            price: {type: Number},
+            thumb: {type: String},
+            images: {type: Array},
+            title: {type: String},
+            sku: {type: String},
+        }
+    ]
 }, {
     timestamps: true
 });

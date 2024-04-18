@@ -6,18 +6,40 @@ import { SelectOption } from "components";
 import icons from "utils/icons";
 import { Link } from "react-router-dom";
 import path from "utils/path";
+import withBase from "hocs/withBase";
 
 const { AiFillEye, IoMenu, AiFillHeart } = icons;
 
-const Product = ({ productData, isNew, normal }) => {
+const Product = ({ productData, isNew, normal, navigate }) => {
   const [isShowOption, setIsShowOption] = useState(false);
+
+  const handleClickOption = (e, flag) => {
+    e.stopPropagation();
+    if (flag === "MENU") {
+      navigate(
+        `/${productData?.category?.toLowerCase()}/${productData?._id}/${
+          productData?.title
+        }`
+      );
+    }
+    if (flag === "WHISHLIST") {
+      console.log("Add to whishlist");
+    }
+    if (flag === "QUICK_VIEW") {
+      console.log("Quick view");
+    }
+  };
   return (
     <div className="w-full text-base px-[10px]">
-      <Link
+      <div
         className="w-full border p-[15px] flex flex-col items-center"
-        to={`/${productData?.category?.toLowerCase()}/${productData?._id}/${
-          productData?.title
-        }`}
+        onClick={() =>
+          navigate(
+            `/${productData?.category?.toLowerCase()}/${productData?._id}/${
+              productData?.title
+            }`
+          )
+        }
         onMouseEnter={(e) => {
           e.stopPropagation();
           setIsShowOption(true);
@@ -30,9 +52,15 @@ const Product = ({ productData, isNew, normal }) => {
         <div className="w-full relative">
           {isShowOption && (
             <div className="absolute bottom-[-10px] left-0 right-0 flex justify-center gap-2 animate-slide-top">
-              <SelectOption icon={<AiFillEye />} />
-              <SelectOption icon={<IoMenu />} />
-              <SelectOption icon={<AiFillHeart />} />
+              <span onClick={(e) => handleClickOption(e,"QUICK_VIEW")}>
+                <SelectOption icon={<AiFillEye />} />
+              </span>
+              <span onClick={(e) => handleClickOption(e,"MENU")}>
+                <SelectOption icon={<IoMenu />} />
+              </span>
+              <span onClick={(e) => handleClickOption(e,"WHISHLIST")}>
+                <SelectOption icon={<AiFillHeart />} />
+              </span>
             </div>
           )}
           <img
@@ -74,9 +102,9 @@ const Product = ({ productData, isNew, normal }) => {
           <span className="line-clamp-1">{productData?.title}</span>
           <span>{`${formatMoney(productData?.price)} VND`}</span>
         </div>
-      </Link>
+      </div>
     </div>
   );
 };
 
-export default memo(Product);
+export default withBase(memo(Product));

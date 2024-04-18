@@ -8,7 +8,8 @@ import { useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
-import clsx from 'clsx'
+import clsx from 'clsx';
+import {BiEdit, BiTrash, BiArrowBack} from "react-icons/bi"
 
 const ManageUser = () => {
   const {
@@ -57,6 +58,7 @@ const ManageUser = () => {
     if (queriesDebounce) {
       queries.q = queriesDebounce;
     }
+    console.log(queries)
     fetchUsers(queries);
   }, [queriesDebounce, params, update]);
 
@@ -241,27 +243,27 @@ const ManageUser = () => {
                   <td className="px-4 py-2">
                     {moment(el.createdAt).format("DD/MM/YYYY")}
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="px-4 py-2 text-center">
                     {editUser?._id === el._id ? (
                       <span
                         onClick={() => setEditUser(null)}
-                        className="px-2 text-blue-500 hover:underline cursor-pointer"
+                        className="px-2 text-blue-500 hover:text-blue-800 cursor-pointer inline-block"
                       >
-                        Back
+                        <BiArrowBack size={16} />
                       </span>
                     ) : (
                       <span
                         onClick={() => setEditUser(el)}
-                        className="px-2 text-blue-500 hover:underline cursor-pointer"
+                        className="px-2 text-blue-500 hover:text-blue-800 cursor-pointer inline-block"
                       >
-                        Edit
+                        <BiEdit size={16} />
                       </span>
                     )}
                     <span
                       onClick={() => handleDeleteUser(el._id)}
-                      className="px-2 text-main hover:underline cursor-pointer"
+                      className="px-2 text-main hover:text-red-700 cursor-pointer inline-block"
                     >
-                      Delete
+                      <BiTrash size={16} />
                     </span>
                   </td>
                 </tr>

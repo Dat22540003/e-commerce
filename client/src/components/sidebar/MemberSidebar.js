@@ -1,17 +1,19 @@
 import React, { memo, Fragment, useState } from 'react';
-import logo from 'assets/logo.png';
-import { adminSidebar } from 'utils/contants';
+import avatar from 'assets/avatar.png';
+import { memberSidebar } from 'utils/contants';
 import { NavLink, Link} from 'react-router-dom';
 import clsx from 'clsx';
 import { AiFillCaretDown, AiFillCaretRight } from 'react-icons/ai';
+import { useSelector } from 'react-redux';
 
 const activeStyle =
   'px-4 py-2 flex items-center gap-2  bg-gray-300';
 const notActiveStyle =
   'px-4 py-2 flex items-center gap-2  hover:bg-gray-200';
 
-const AdminSidebar = () => {
+const MemberSidebar = () => {
   const [active, setActive] = useState([]);
+  const {current} = useSelector(state => state.user);
   const handleShowTabs = (id) => {
     if(active.some(el => el === id)){
       setActive(prev => prev.filter(el => el !== id))
@@ -20,17 +22,17 @@ const AdminSidebar = () => {
     }
   };
   return (
-    <div className='py-4 bg-white h-full'>
-      <Link to={'/'} className='flex flex-col items-center justify-center p-4 gap-2'>
+    <div className='py-4 bg-white h-full w-[250px] flex-none'>
+      <div className='w-full flex flex-col items-center justify-center py-4'>
         <img
-          src={logo}
-          alt='logo'
-          className='w-[200px] object-contain'
+          src={current?.avatar || avatar}
+          alt='avatar'
+          className='w-16 h-16 object-cover rounded-full'
         />
-        <small>Admin Workspace</small>
-      </Link>
+        <small>{`${current?.firstname} ${current?.lastname}`}</small>
+      </div>
       <div>
-        {adminSidebar.map((el) => (
+        {memberSidebar.map((el) => (
           <Fragment key={el.id}>
             {el.type === 'SINGLE' && (
               <NavLink
@@ -77,4 +79,4 @@ const AdminSidebar = () => {
   );
 };
 
-export default memo(AdminSidebar);
+export default memo(MemberSidebar);

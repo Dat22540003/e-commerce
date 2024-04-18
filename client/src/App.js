@@ -20,7 +20,7 @@ import {
   CreateProduct,
   Dashboard,
 } from "pages/admin";
-import { MemberLayout, Personal } from "pages/member";
+import { MemberLayout, Personal, BuyHistory, WhishList, MyCart } from "pages/member";
 import path from "utils/path";
 import { getCategories } from "store/app/asyncActions";
 import { useDispatch, useSelector } from "react-redux";
@@ -53,15 +53,18 @@ function App() {
           <Route path={path.RESET_PASSWORD} element={<ResetPassword />} />
           <Route path={path.ALL} element={<Home />} />
         </Route>
-        <Route path={path.ADMIN} element={<AdminLayout/>}>
-          <Route path={path.DASHBOARD} element={<Dashboard/>}/>
-          <Route path={path.MANAGE_ORDER} element={<ManageOrder/>}/>
-          <Route path={path.MANAGE_PRODUCT} element={<ManageProduct/>}/>
-          <Route path={path.MANAGE_USER} element={<ManageUser/>}/>
-          <Route path={path.CREATE_PRODUCT} element={<CreateProduct/>}/>
+        <Route path={path.ADMIN} element={<AdminLayout />}>
+          <Route path={path.DASHBOARD} element={<Dashboard />} />
+          <Route path={path.MANAGE_ORDER} element={<ManageOrder />} />
+          <Route path={path.MANAGE_PRODUCT} element={<ManageProduct />} />
+          <Route path={path.MANAGE_USER} element={<ManageUser />} />
+          <Route path={path.CREATE_PRODUCT} element={<CreateProduct />} />
         </Route>
-        <Route path={path.MEMBER} element={<MemberLayout/>}>
-          <Route path={path.PERSONAL} element={<Personal/>}/>
+        <Route path={path.MEMBER} element={<MemberLayout />}>
+          <Route path={path.PERSONAL} element={<Personal />} />
+          <Route path={path.MY_CART} element={<MyCart id={'mycart'} />} />
+          <Route path={path.WISHLIST} element={<WhishList />} />
+          <Route path={path.HISTORY} element={<BuyHistory />} />
         </Route>
         <Route path={path.COMPLETE_REGISTER} element={<CompleteRegister />} />
         <Route path={path.LOGIN} element={<Login />} />

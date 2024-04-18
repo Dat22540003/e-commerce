@@ -17,6 +17,8 @@ import {
   renderStarFromNumber,
 } from "../../utils/helpers";
 import { productExtraInfomation } from "../../utils/contants";
+import DOMPurify from "dompurify";
+import clsx from "clsx";
 
 const settings = {
   dots: false,
@@ -27,7 +29,7 @@ const settings = {
 };
 
 const ProductDetail = () => {
-  const { pid, title, category } = useParams();
+  const { pid, category } = useParams();
 
   const [product, setProduct] = useState(null);
 
@@ -37,7 +39,17 @@ const ProductDetail = () => {
 
   const [relatedProducts, setRelatedProducts] = useState(null);
 
-  const [updateVote, setUpdateVote] = useState(false)
+  const [updateVote, setUpdateVote] = useState(false);
+
+  const [variant, setVariant] = useState(null);
+
+  const [currentProduct, setCurrentProduct] = useState({
+    title: "",
+    thumb: "",
+    price: "",
+    color: "",
+    images: [],
+  });
 
   const fetchProductData = async () => {
     const response = await apiGetProduct(pid);
@@ -46,6 +58,30 @@ const ProductDetail = () => {
       setCurrentImage(response?.productData?.thumb);
     }
   };
+
+  useEffect(() => {
+    if (variant) {
+      setCurrentProduct({
+        title: product?.variant?.find((el) => el.sku === variant)?.title,
+        thumb: product?.variant?.find((el) => el.sku === variant)?.thumb,
+        color: product?.variant?.find((el) => el.sku === variant)?.color,
+        price: product?.variant?.find((el) => el.sku === variant)?.price,
+        images: product?.variant?.find((el) => el.sku === variant)?.images,
+      });
+      setCurrentImage(
+        product?.variant?.find((el) => el.sku === variant)?.thumb
+      );
+    } else {
+      setCurrentProduct({
+        title: "",
+        thumb: "",
+        price: "",
+        color: "",
+        images: [],
+      });
+      setCurrentImage(product?.thumb);
+    }
+  }, [variant]);
 
   const fetchProducts = async () => {
     const response = await apiGetProducts({ category });
@@ -69,7 +105,7 @@ const ProductDetail = () => {
   }, [updateVote]);
 
   const reRenderVote = useCallback(() => {
-    setUpdateVote(!updateVote)
+    setUpdateVote(!updateVote);
   }, [updateVote]);
 
   const handleQuantity = useCallback(
@@ -107,13 +143,18 @@ const ProductDetail = () => {
     <div className="w-full">
       <div className="h-[81px] bg-gray-100  flex items-center justify-center">
         <div className="w-main">
-          <h3 className="font-semibold">{title}</h3>
-          <Breadcrumb title={title} category={category} />
+          <h3 className="font-semibold">
+            {currentProduct?.title || product?.title}
+          </h3>
+          <Breadcrumb
+            title={currentProduct?.title || product?.title}
+            category={category}
+          />
         </div>
       </div>
       <div className="w-main m-auto mt-4 flex">
         <div className="w-2/5 flex flex-col gap-4">
-          <div className="h-[458px] w-[458px] border">
+          <div className="h-[458px] flex items-center w-[458px] border">
             <ReactImageMagnify
               {...{
                 smallImage: {
@@ -133,26 +174,48 @@ const ProductDetail = () => {
           </div>
           <div className="w-[458px]">
             <Slider {...settings} className="image-slider">
-              {product?.images?.map((el, index) => (
-                <div
-                  key={index}
-                  className="flex w-full justify-between mx-[3px]"
-                >
-                  <img
-                    src={el}
-                    alt="sub-product"
-                    className="h-[143px] w-[143px] object-contain border cursor-pointer"
-                    onClick={(e) => handleClickImage(e, el)}
-                  />
-                </div>
-              ))}
+              {currentProduct?.images?.length === 0 &&
+                product?.images?.map((el, index) => (
+                  <div
+                    key={index}
+                    className="flex w-full justify-between mx-[3px]"
+                  >
+                    <img
+                      src={el}
+                      alt="sub-product"
+                      className={clsx(
+                        "h-[143px] w-[143px] object-contain border cursor-pointer",
+                        currentImage === el && "border-main"
+                      )}
+                      onClick={(e) => handleClickImage(e, el)}
+                    />
+                  </div>
+                ))}
+
+              {currentProduct?.images?.length > 0 &&
+                currentProduct?.images?.map((el, index) => (
+                  <div
+                    key={index}
+                    className="flex w-full justify-between mx-[3px]"
+                  >
+                    <img
+                      src={el}
+                      alt="sub-product"
+                      className={clsx(
+                        "h-[143px] w-[143px] object-contain border cursor-pointer",
+                        currentImage === el && "border-main"
+                      )}
+                      onClick={(e) => handleClickImage(e, el)}
+                    />
+                  </div>
+                ))}
             </Slider>
           </div>
         </div>
         <div className="w-2/5 pr-6 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <h2 className="text-[30px] font-semibold">{`${formatMoney(
-              formatPrice(product?.price)
+              formatPrice(currentProduct?.price || product?.price)
             )} VND`}</h2>
             <span className="text-sm text-main">{`In stock: ${product?.quantity} item(s)`}</span>
           </div>
@@ -163,15 +226,65 @@ const ProductDetail = () => {
             <span className="text-sm text-main italic">{`(Sold: ${product?.sold} item(s))`}</span>
           </div>
           <ul className="list-square text-sm text-gray-500 pl-4">
-            {product?.description?.map((el, index) => (
-              <li key={index} className="leading-6">
-                {el}
-              </li>
-            ))}
+            {product?.description?.length > 1 &&
+              product?.description?.map((el, index) => (
+                <li key={index} className="leading-6">
+                  {el}
+                </li>
+              ))}
+            {product?.description?.length === 1 && (
+              <div
+                className="text-sm line-clamp-[10] mb-8"
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(product?.description[0]),
+                }}
+              ></div>
+            )}
           </ul>
+          <div className="my-4 flex gap-4">
+            <span className="font-semibold">Color:</span>
+            <div className="flex flex-wrap gap-4 items-center w-full">
+              <div
+                onClick={() => setVariant(null)}
+                className={clsx(
+                  "flex items-center gap-2 p-2 border cursor-pointer",
+                  !variant && "border-main"
+                )}
+              >
+                <img
+                  src={product?.thumb}
+                  alt="thumb"
+                  className="w-8 h-8 rounded-md object-cover"
+                />
+                <span className="flex flex-col">
+                  <span className="text-xs">{product?.color}</span>
+                  <span className="text-xs">{product?.price}</span>
+                </span>
+              </div>
+              {product?.variant?.map((el) => (
+                <div
+                  onClick={() => setVariant(el.sku)}
+                  className={clsx(
+                    "flex items-center gap-2 p-2 border cursor-pointer",
+                    variant === el.sku && "border-main"
+                  )}
+                >
+                  <img
+                    src={el?.thumb}
+                    alt="thumb"
+                    className="w-8 h-8 rounded-md object-cover"
+                  />
+                  <span className="flex flex-col">
+                    <span className="text-xs">{el?.color}</span>
+                    <span className="text-xs">{el?.price}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
           <div className="flex flex-col gap-8">
             <div className="flex items-center gap-4">
-              <span className="font-semibold">Quantity</span>
+              <span className="font-semibold">Quantity:</span>
               <SelectQuantity
                 quantity={quantity}
                 handleQuantity={handleQuantity}

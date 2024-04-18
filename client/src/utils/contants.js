@@ -1,6 +1,5 @@
 import path from "./path";
 import icons from "./icons";
-import { BsGiftFill } from "react-icons/bs";
 
 export const navigation = [
   {
@@ -254,4 +253,37 @@ export const blockStatus = [
     code: false,
     value: 'Active',
   },
+]
+
+const {AiOutlineUser, AiOutlineOrderedList, AiOutlineShoppingCart, AiOutlineHistory} = icons;
+export const memberSidebar = [
+  {
+    id: 1,
+    type: 'SINGLE',
+    text: 'Personal',
+    path: `/${path.MEMBER}/${path.PERSONAL}`,
+    icon: <AiOutlineUser size={20}/>
+  },
+  {
+    id: 2,
+    type: 'SINGLE',
+    text: 'My cart',
+    path: `/${path.MEMBER}/${path.MY_CART}`,
+    icon: <AiOutlineShoppingCart size={20}/>
+  },
+  {
+    id: 3,
+    type: 'SINGLE',
+    text: 'Buy history',
+    path: `/${path.MEMBER}/${path.HISTORY}`,
+    icon: <AiOutlineHistory size={20}/>,
+  },
+  {
+    id: 4,
+    type: 'SINGLE',
+    text: 'Wishlist',
+    path: `/${path.MEMBER}/${path.WISHLIST}`,
+    icon: <AiOutlineOrderedList size={20}/>
+  },
+
 ]

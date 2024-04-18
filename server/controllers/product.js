@@ -1,19 +1,36 @@
 const Product = require("../models/product");
 const asyncHandler = require("express-async-handler");
 const slugify = require("slugify");
+const uniqid = require("uniqid");
 
 // Create new product
 const createProduct = asyncHandler(async (req, res) => {
-  if (Object.keys(req.body).length === 0) {
+  const { title, price, description, brand, color, category } = req.body;
+  const thumb = req?.files?.thumb[0]?.path;
+  const images = req?.files?.images?.map((el) => el.path);
+  if (
+    !(
+      title &&
+      price &&
+      description &&
+      brand &&
+      color &&
+      category &&
+      thumb &&
+      images
+    )
+  ) {
     throw new Error("Missing inputs");
   }
-  if (req.body && req.body.title) {
-    req.body.slug = slugify(req.body.title);
-  }
+  req.body.slug = slugify(title);
+  if (thumb) req.body.thumb = thumb;
+  if (images) req.body.images = images;
   const product = await Product.create(req.body);
   return res.status(200).json({
     success: product ? true : false,
-    createdProduct: product ? product : "Cannot create new product!",
+    message: product
+      ? "A new product has been added!"
+      : "Cannot create new product!",
   });
 });
 
@@ -63,8 +80,20 @@ const getProducts = asyncHandler(async (req, res) => {
     }));
     colorQueryObject = { $or: colorQuery };
   }
-  const q = { ...colorQueryObject, ...formattedQueries };
-  let queryCommand = Product.find(q);
+
+  if (req.query.q) {
+    delete formattedQueries.q;
+    formattedQueries["$or"] = [
+      { title: { $regex: req.query.q, $options: "i" } },
+      { brand: { $regex: req.query.q, $options: "i" } },
+      { category: { $regex: req.query.q, $options: "i" } },
+      { description: { $regex: req.query.q, $options: "i" } },
+      { color: { $regex: req.query.q, $options: "i" } },
+    ];
+  }
+
+  const qr = { ...colorQueryObject, ...formattedQueries };
+  let queryCommand = Product.find(qr);
 
   // Sorting
   if (req.query.sort) {
@@ -91,7 +120,7 @@ const getProducts = asyncHandler(async (req, res) => {
     const products = await queryCommand.exec();
     if (!products || products.length === 0)
       throw new Error("Cannot get products!");
-    const count = await Product.find(q).countDocuments();
+    const count = await Product.find(qr).countDocuments();
     return res.status(200).json({
       success: products ? true : false,
       count,
@@ -105,11 +134,18 @@ const getProducts = asyncHandler(async (req, res) => {
 //  Update product
 const updateProduct = asyncHandler(async (req, res) => {
   const { pid } = req.params;
+  const files = req.files;
+  if (files?.thumb) {
+    req.body.thumb = files?.thumb[0]?.path;
+  }
+  if (files?.images) {
+    req.body.images = files?.images?.map((el) => el.path);
+  }
   if (req.body && req.body.title) req.body.slug = slugify(req.body.title);
   const product = await Product.findByIdAndUpdate(pid, req.body, { new: true });
   return res.status(200).json({
     success: product ? true : false,
-    productData: product ? product : "Cannot update products!",
+    message: product ? "Product is updated" : "Cannot update product!",
   });
 });
 
@@ -119,7 +155,7 @@ const deleteProduct = asyncHandler(async (req, res) => {
   const product = await Product.findByIdAndDelete(pid);
   return res.status(200).json({
     success: product ? true : false,
-    deletedData: product ? product : "Cannot delete products!",
+    message: product ? "Product has been removed" : "Cannot delete products!",
   });
 });
 
@@ -140,7 +176,11 @@ const ratings = asyncHandler(async (req, res) => {
         ratings: { $elemMatch: alreadyRating },
       },
       {
-        $set: { "ratings.$.star": star, "ratings.$.comment": comment, "ratings.$.updatedAt": updatedAt},
+        $set: {
+          "ratings.$.star": star,
+          "ratings.$.comment": comment,
+          "ratings.$.updatedAt": updatedAt,
+        },
       }
     );
   } else {
@@ -185,6 +225,38 @@ const uploadProductImages = asyncHandler(async (req, res) => {
   });
 });
 
+// Add variants
+const addVariant = asyncHandler(async (req, res) => {
+  const { pid } = req.params;
+  const { title, price, color } = req.body;
+  const thumb = req?.files?.thumb[0]?.path;
+  const images = req?.files?.images?.map((el) => el.path);
+  if (!(title && price && color && thumb && images)) {
+    throw new Error("Missing inputs");
+  }
+
+  const respone = await Product.findByIdAndUpdate(
+    pid,
+    {
+      $push: {
+        variant: {
+          color,
+          price,
+          title,
+          thumb,
+          images,
+          sku: uniqid().toUpperCase(),
+        },
+      },
+    },
+    { new: true }
+  );
+  return res.status(200).json({
+    success: respone ? true : false,
+    message: respone ? "A new variant has been added" : "Cannot update product images!",
+  });
+});
+
 module.exports = {
   createProduct,
   getProduct,
@@ -193,4 +265,5 @@ module.exports = {
   deleteProduct,
   ratings,
   uploadProductImages,
+  addVariant,
 };

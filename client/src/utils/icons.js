@@ -12,6 +12,10 @@ import {
   AiFillGift,
   AiOutlineDown,
   AiOutlineDashboard,
+  AiOutlineUser,
+  AiOutlineOrderedList,
+  AiOutlineShoppingCart,
+  AiOutlineHistory,
 } from "react-icons/ai";
 import { IoMenu } from "react-icons/io5";
 import { GrFormNext } from "react-icons/gr";
@@ -40,6 +44,10 @@ const icons = {
   MdOutlineGroup,
   RiProductHuntLine,
   RiBillLine,
+  AiOutlineUser,
+  AiOutlineOrderedList,
+  AiOutlineShoppingCart,
+  AiOutlineHistory,
 };
 
 export default icons;

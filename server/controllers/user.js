@@ -341,15 +341,18 @@ const deleteUser = asyncHandler(async (req, res) => {
 // Update user
 const updateUser = asyncHandler(async (req, res) => {
   const { _id } = req.user;
+  const {firstname, lastname, email, mobile} = req.body;
+  const data = {firstname, lastname, email, mobile};
+  if(req.file) data.avatar = req?.file?.path;
   if (!_id || Object.keys(req.body).length === 0)
     throw new Error("Missing inputs");
 
-  const user = await User.findByIdAndUpdate(_id, req.body, {
+  const user = await User.findByIdAndUpdate(_id, data, {
     new: true,
   }).select("-refreshToken -password -role");
   return res.status(200).json({
     success: user ? true : false,
-    updatedUser: user ? user : `User not found!`,
+    message: user ? `User has been updated` : `User not found!`,
   });
 });
 
