@@ -1,7 +1,7 @@
 import { Button, InputForm } from "components";
 import moment from "moment";
 import React, { useEffect } from "react";
-import { get, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import avatar from "assets/avatar.png";
 import { apiUpdateCurrent } from "apis";
@@ -28,6 +28,7 @@ const Personal = () => {
       email: current?.email,
       mobile: current?.mobile,
       avatar: current?.avatar,
+      address: current?.address,
     });
   }, [current]);
 
@@ -99,6 +100,15 @@ const Personal = () => {
               value: /^[62|0]+\d{9}/gi,
               message: "Invalid phone number",
             },
+          }}
+        />
+        <InputForm
+          label="Address"
+          register={register}
+          errors={errors}
+          id="address"
+          validate={{
+            required: "Required",
           }}
         />
         <div className="flex items-center gap-2">

@@ -1,6 +1,6 @@
 import { RiPhoneFill, RiTruckFill, RiProductHuntLine, RiBillLine } from "react-icons/ri";
 import { MdEmail, MdOutlineGroup } from "react-icons/md";
-import { BsFillHandbagFill, BsShieldShaded, BsFillReplyFill} from "react-icons/bs";
+import { BsFillHandbagFill, BsShieldShaded, BsFillReplyFill, BsFillCartPlusFill,  BsCartCheckFill} from "react-icons/bs";
 import { BiSolidUserCircle } from "react-icons/bi";
 import {
   AiFillHome,
@@ -48,6 +48,8 @@ const icons = {
   AiOutlineOrderedList,
   AiOutlineShoppingCart,
   AiOutlineHistory,
+  BsFillCartPlusFill,
+  BsCartCheckFill,
 };
 
 export default icons;

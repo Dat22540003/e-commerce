@@ -64,9 +64,7 @@ const CustomizeVariant = ({
       await dispatchLoadingModal(true);
       const response = await apiAddVariant(formData, customizeVariant?._id);
       await dispatchLoadingModal(false);
-
-      console.log(response)
-
+      
       if (response?.success) {
         toast.success(response?.message);
         reset();

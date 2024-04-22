@@ -4,29 +4,76 @@ import labelYellow from "assets/label-yellow.png";
 import labelEmerald from "assets/label-emerald.png";
 import { SelectOption } from "components";
 import icons from "utils/icons";
-import { Link } from "react-router-dom";
-import path from "utils/path";
 import withBase from "hocs/withBase";
+import { showModal } from "store/app/appSlice";
+import { ProductDetail } from "pages/public";
+import { apiUpdateCart } from "apis";
+import { toast } from "react-toastify";
+import { getCurrent } from "store/user/asyncActions";
+import { useSelector } from "react-redux";
+import Swal from "sweetalert2";
+import path from "utils/path";
+import { createSearchParams } from "react-router-dom";
 
-const { AiFillEye, IoMenu, AiFillHeart } = icons;
+const { AiFillEye, BsFillCartPlusFill, BsCartCheckFill, AiFillHeart } = icons;
 
-const Product = ({ productData, isNew, normal, navigate }) => {
+const Product = ({ productData, isNew, normal, navigate, dispatch, location }) => {
   const [isShowOption, setIsShowOption] = useState(false);
+  const { current } = useSelector((state) => state.user);
 
-  const handleClickOption = (e, flag) => {
+  const handleClickOption = async (e, flag) => {
     e.stopPropagation();
-    if (flag === "MENU") {
-      navigate(
-        `/${productData?.category?.toLowerCase()}/${productData?._id}/${
-          productData?.title
-        }`
-      );
+    if (flag === "CART") {
+      if (!current) {
+        return Swal.fire({
+          title: "Oops!",
+          text: "Please login to continue!",
+          icon: "info",
+          showConfirmButton: true,
+          confirmButtonText: "Go to login page",
+          showCancelButton: true,
+          cancelButtonText: "Not now",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            navigate({
+              pathname: `/${path.LOGIN}`,
+              search: createSearchParams({
+                redirect: location?.pathname,
+              }).toString(),
+            });
+          }
+        });
+      }
+      const response = await apiUpdateCart({
+        pid: productData?._id,
+        color: productData?.color,
+        quantity: 1,
+        price: productData?.price,
+        thumbnail: productData?.thumb,
+        title: productData?.title,
+      });
+      if (response?.success) {
+        toast.success(response?.message);
+        dispatch(getCurrent());
+      } else {
+        toast.error(response?.message);
+      }
     }
     if (flag === "WHISHLIST") {
       console.log("Add to whishlist");
     }
     if (flag === "QUICK_VIEW") {
-      console.log("Quick view");
+      dispatch(
+        showModal({
+          isShowModal: true,
+          modalChildren: (
+            <ProductDetail
+              data={{ pid: productData?._id, category: productData?.category }}
+              isQuickView
+            />
+          ),
+        })
+      );
     }
   };
   return (
@@ -52,13 +99,35 @@ const Product = ({ productData, isNew, normal, navigate }) => {
         <div className="w-full relative">
           {isShowOption && (
             <div className="absolute bottom-[-10px] left-0 right-0 flex justify-center gap-2 animate-slide-top">
-              <span onClick={(e) => handleClickOption(e,"QUICK_VIEW")}>
+              <span
+                title="Quick view"
+                onClick={(e) => handleClickOption(e, "QUICK_VIEW")}
+              >
                 <SelectOption icon={<AiFillEye />} />
               </span>
-              <span onClick={(e) => handleClickOption(e,"MENU")}>
-                <SelectOption icon={<IoMenu />} />
-              </span>
-              <span onClick={(e) => handleClickOption(e,"WHISHLIST")}>
+              {current?.cart?.some(
+                (el) => el?.product?._id === productData?._id
+              ) ? (
+                <span
+                  title="Added to cart"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                >
+                  <SelectOption icon={<BsCartCheckFill color="gray" />} />
+                </span>
+              ) : (
+                <span
+                  title="Add to cart"
+                  onClick={(e) => handleClickOption(e, "CART")}
+                >
+                  <SelectOption icon={<BsFillCartPlusFill />} />
+                </span>
+              )}
+              <span
+                title="Add to whishlist"
+                onClick={(e) => handleClickOption(e, "WHISHLIST")}
+              >
                 <SelectOption icon={<AiFillHeart />} />
               </span>
             </div>

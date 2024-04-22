@@ -1,10 +1,12 @@
 import withBase from 'hocs/withBase'
+import { CartDetail } from 'pages/public'
 import React from 'react'
 
-const MyCart = (props) => {
-  console.log(props)
+const MyCart = () => {
   return (
-    <div>MyCart</div>
+    <div className='px-2'>
+      <CartDetail/>
+    </div>
   )
 }
 

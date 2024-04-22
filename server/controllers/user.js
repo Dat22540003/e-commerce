@@ -140,7 +140,13 @@ const login = asyncHandler(async (req, res) => {
 // Get current user
 const getCurrent = asyncHandler(async (req, res) => {
   const { _id } = req.user;
-  const user = await User.findById({ _id }).select("-refreshToken -password");
+  const user = await User.findById({ _id })
+    .select("-refreshToken -password")
+    .populate({
+      path: "cart.product",
+      select: "title thumb price ",
+    });
+
   return res.status(200).json({
     success: user ? true : false,
     rs: user ? user : "User not found",
@@ -282,7 +288,7 @@ const getUsers = asyncHandler(async (req, res) => {
 
   if (req.query.q) {
     delete formattedQueries.q;
-    formattedQueries['$or'] = [
+    formattedQueries["$or"] = [
       { firstname: { $regex: req.query.q, $options: "i" } },
       { lastname: { $regex: req.query.q, $options: "i" } },
       { email: { $regex: req.query.q, $options: "i" } },
@@ -341,9 +347,9 @@ const deleteUser = asyncHandler(async (req, res) => {
 // Update user
 const updateUser = asyncHandler(async (req, res) => {
   const { _id } = req.user;
-  const {firstname, lastname, email, mobile} = req.body;
-  const data = {firstname, lastname, email, mobile};
-  if(req.file) data.avatar = req?.file?.path;
+  const { firstname, lastname, email, mobile, address } = req.body;
+  const data = { firstname, lastname, email, mobile, address };
+  if (req.file) data.avatar = req?.file?.path;
   if (!_id || Object.keys(req.body).length === 0)
     throw new Error("Missing inputs");
 
@@ -366,7 +372,7 @@ const updateUserByAdmin = asyncHandler(async (req, res) => {
   }).select("-refreshToken -password -role");
   return res.status(200).json({
     success: user ? true : false,
-    message: user ? 'Updated' : 'Something went wrong!',
+    message: user ? "Updated" : "Something went wrong!",
   });
 });
 
@@ -388,43 +394,69 @@ const updateUserAddress = asyncHandler(async (req, res) => {
 // Update user cart
 const updateUserCart = asyncHandler(async (req, res) => {
   const { _id } = req.user;
-  const { pid, quantity, color } = req.body;
-  if (!pid || !quantity || !color) throw new Error("Missing inputs");
+  const { pid, quantity = 1, color, price, thumbnail, title } = req.body;
+  if (!pid || !color) throw new Error("Missing inputs");
   const user = await User.findById(_id).select("cart");
-  const alreadyAdded = user?.cart?.find((el) => el.product.toString() === pid);
+  const alreadyAdded = user?.cart?.find((el) => el?.product.toString() === pid && el?.color === color);
   if (alreadyAdded) {
-    if (alreadyAdded.color === color) {
-      const response = await User.updateOne(
-        { cart: { $elemMatch: alreadyAdded } },
-        { $set: { "cart.$.quantity": quantity } },
-        { new: true }
-      );
-      return res.status(200).json({
-        success: response ? true : false,
-        updatedUserCart: response ? response : `User not found!`,
-      });
-    } else {
-      const response = await User.findByIdAndUpdate(
-        _id,
-        { $push: { cart: { product: pid, quantity, color } } },
-        { new: true }
-      );
-      return res.status(200).json({
-        success: response ? true : false,
-        updatedUserCart: response ? response : `User not found!`,
-      });
-    }
-  } else {
-    const response = await User.findByIdAndUpdate(
-      _id,
-      { $push: { cart: { product: pid, quantity, color } } },
+    console.log(alreadyAdded)
+    const response = await User.updateOne(
+      { cart: { $elemMatch: alreadyAdded } },
+      {
+        $set: {
+          "cart.$.quantity": quantity,
+          "cart.$.price": price,
+          "cart.$.thumbnail": thumbnail,
+          "cart.$.title": title,
+        },
+      },
       { new: true }
     );
     return res.status(200).json({
       success: response ? true : false,
-      updatedUserCart: response ? response : `User not found!`,
+      message: response ? "Your cart has been updated" : `User not found!`,
+    });
+  } else {
+    const response = await User.findByIdAndUpdate(
+      _id,
+      {
+        $push: {
+          cart: { product: pid, quantity, color, price, thumbnail, title },
+        },
+      },
+      { new: true }
+    );
+    return res.status(200).json({
+      success: response ? true : false,
+      message: response ? "Your cart has been update" : `User not found!`,
     });
   }
+});
+
+// Remove product from cart
+const removeProductFromCart = asyncHandler(async (req, res) => {
+  const { _id } = req.user;
+  const { pid, color } = req.params;
+  console.log(pid);
+  const user = await User.findById(_id).select("cart");
+  const alreadyAdded = user?.cart?.find(
+    (el) => el?.product.toString() === pid && el?.color === color
+  );
+  if (!alreadyAdded) {
+    return res.status(200).json({
+      success: true,
+      message: "Your cart has been updated",
+    });
+  }
+  const response = await User.findByIdAndUpdate(
+    _id,
+    { $pull: { cart: { product: pid, color } } },
+    { new: true }
+  );
+  return res.status(200).json({
+    success: response ? true : false,
+    message: response ? "Your cart has been update" : `User not found!`,
+  });
 });
 
 const createUsers = asyncHandler(async (req, res) => {
@@ -451,4 +483,5 @@ module.exports = {
   updateUserCart,
   completeRegister,
   createUsers,
+  removeProductFromCart,
 };

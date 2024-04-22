@@ -8,7 +8,7 @@ import {
   apiCompleteRegister,
 } from "apis";
 import Swal from "sweetalert2";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import path from "utils/path";
 import { login } from "store/user/userSlice";
 import { showModal } from "store/app/appSlice";
@@ -34,6 +34,8 @@ const Login = () => {
   const [isForgotPassword, setIsForgotPassword] = useState(false);
 
   const [isRegister, setIsRegister] = useState(false);
+
+  const [searchParams] = useSearchParams();
 
   const resetPayload = () => {
     setPayload({
@@ -90,7 +92,9 @@ const Login = () => {
               token: loginRes.accessToken,
             })
           );
-          navigate(`/${path.HOME}`);
+          searchParams.get("redirect")
+            ? navigate(searchParams.get("redirect"))
+            : navigate(`/${path.HOME}`);
         } else {
           Swal.fire("Oop!", loginRes?.message, "error");
         }
@@ -124,8 +128,8 @@ const Login = () => {
               className="p-2 border rounded-md outline-none"
             />
             <Button
-            handleOnClick={completeRegister}
-            style="ml-4 px-4 py-2 rounded-md text-white bg-blue-500 text-semibold"
+              handleOnClick={completeRegister}
+              style="ml-4 px-4 py-2 rounded-md text-white bg-blue-500 text-semibold"
             >
               Submit
             </Button>

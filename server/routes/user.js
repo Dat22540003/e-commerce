@@ -17,6 +17,7 @@ router.delete('/:uid', [verifyAccessToken, isAdmin], ctrls.deleteUser);
 router.put('/current', verifyAccessToken, uploader.single('avatar'), ctrls.updateUser);
 router.put('/address', [verifyAccessToken], ctrls.updateUserAddress);
 router.put('/cart', [verifyAccessToken], ctrls.updateUserCart);
+router.delete('/remove-cart/:pid/:color', [verifyAccessToken], ctrls.removeProductFromCart);
 router.put('/:uid', [verifyAccessToken, isAdmin], ctrls.updateUserByAdmin);
 
 
