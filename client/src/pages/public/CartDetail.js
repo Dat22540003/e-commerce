@@ -2,21 +2,43 @@ import { Breadcrumb, Button, OrderedItem, SelectQuantity } from "components";
 import withBase from "hocs/withBase";
 import React from "react";
 import { useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+import { Link, createSearchParams } from "react-router-dom";
+import Swal from "sweetalert2";
 import { formatMoney } from "utils/helpers";
 import path from "utils/path";
 
-const CartDetail = () => {
-  const { currentCart } = useSelector((state) => state.user);
+const CartDetail = ({ navigate, location }) => {
+  const { currentCart, current } = useSelector((state) => state.user);
+  const handleCheckout = () => {
+    if (!current?.address) {
+      return Swal.fire({
+        title: "Oops!",
+        text: "Please update your address to continue!",
+        icon: "info",
+        showConfirmButton: true,
+        confirmButtonText: "Update now",
+        showCancelButton: true,
+        cancelButtonText: "Cancel",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate({
+            pathname: `/${path.MEMBER}/${path.PERSONAL}`,
+            search: createSearchParams({
+              redirect: location?.pathname,
+            }).toString(),
+          });
+        }
+      });
+    } else {
+      window.open(`/${path.CHECKOUT}`, "_blank");
+    }
+  };
 
   return (
     <div className="w-full">
-      <div className="h-[81px] bg-gray-100 flex items-center justify-center">
-        <div className="w-full">
-          <h1 className="h-[75px] flex justify-between items-center text-3xl text-gray-800 font-bold px-4 border-b">
-            MY CART
-          </h1>
-        </div>
+      <div className="h-[75px] w-full"></div>
+      <div className="p-4 w-full bg-gray-100 flex justify-between items-center text-3xl text-gray-800 font-bold border-b fixed top-0">
+        <h1>My cart</h1>
       </div>
       <div className="w-full my-8 flex flex-col border mt-8">
         <div className="w-full font-semibold mx-auto py-3 grid grid-cols-10 bg-stone-300">
@@ -55,13 +77,7 @@ const CartDetail = () => {
         <span className="text-xs italic text-stone-400">
           Shipping, taxes, and discounts calculated at checkout.
         </span>
-        <Link
-          target="_blank"
-          className="bg-main text-gray-100 px-4 py-2 rounded-md"
-          to={`/${path.CHECKOUT}`}
-        >
-          Check out
-        </Link>
+        <Button handleOnClick={handleCheckout}>Check out</Button>
       </div>
     </div>
   );

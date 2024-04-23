@@ -145,7 +145,8 @@ const getCurrent = asyncHandler(async (req, res) => {
     .populate({
       path: "cart.product",
       select: "title thumb price ",
-    });
+    })
+    .populate("wishlist","title thumb price color");
 
   return res.status(200).json({
     success: user ? true : false,
@@ -397,9 +398,11 @@ const updateUserCart = asyncHandler(async (req, res) => {
   const { pid, quantity = 1, color, price, thumbnail, title } = req.body;
   if (!pid || !color) throw new Error("Missing inputs");
   const user = await User.findById(_id).select("cart");
-  const alreadyAdded = user?.cart?.find((el) => el?.product.toString() === pid && el?.color === color);
+  const alreadyAdded = user?.cart?.find(
+    (el) => el?.product.toString() === pid && el?.color === color
+  );
   if (alreadyAdded) {
-    console.log(alreadyAdded)
+    console.log(alreadyAdded);
     const response = await User.updateOne(
       { cart: { $elemMatch: alreadyAdded } },
       {
@@ -467,6 +470,42 @@ const createUsers = asyncHandler(async (req, res) => {
   });
 });
 
+const updateWishlist = asyncHandler(async (req, res) => {
+  const { pid } = req.params;
+  const { _id } = req.user;
+  const user = await User.findById(_id);
+  const isInWishlist = user?.wishlist?.find((el) => el.toString() === pid);
+  if (isInWishlist) {
+    const response = await User.findByIdAndUpdate(
+      _id,
+      { $pull: { wishlist: pid } },
+      { new: true }
+    );
+    return res.status(200).json({
+      success: response ? true : false,
+      message: response
+        ? "Successfully removed from wishlist."
+        : `failed to remove from wishlist.`,
+    });
+  } else {
+    const response = await User.findByIdAndUpdate(
+      _id,
+      { $push: { wishlist: pid } },
+      { new: true }
+    );
+    return res.status(200).json({
+      success: response ? true : false,
+      message: response
+        ? "Successfully added to wishlist."
+        : `failed to add to wishlist.`,
+    });
+  }
+  return res.status(200).json({
+    success: response ? true : false,
+    users: response ? response : `User not found!`,
+  });
+});
+
 module.exports = {
   register,
   login,
@@ -484,4 +523,5 @@ module.exports = {
   completeRegister,
   createUsers,
   removeProductFromCart,
+  updateWishlist,
 };

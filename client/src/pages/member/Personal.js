@@ -7,8 +7,10 @@ import avatar from "assets/avatar.png";
 import { apiUpdateCurrent } from "apis";
 import { getCurrent } from "store/user/asyncActions";
 import { toast } from "react-toastify";
+import { useSearchParams } from "react-router-dom";
+import withBase from "hocs/withBase";
 
-const Personal = () => {
+const Personal = ({navigate}) => {
   const {
     register,
     formState: { errors, isDirty },
@@ -20,6 +22,8 @@ const Personal = () => {
   const { current } = useSelector((state) => state.user);
 
   const dispatch = useDispatch();
+
+  const[searchParams] = useSearchParams();
 
   useEffect(() => {
     reset({
@@ -47,6 +51,9 @@ const Personal = () => {
     if (response?.success) {
       dispatch(getCurrent());
       toast.success(response.message);
+      if(searchParams.get("redirect")){
+        navigate(`${searchParams.get("redirect")}`)
+      }
     } else {
       toast.error(response.message);
     }
@@ -144,4 +151,4 @@ const Personal = () => {
   );
 };
 
-export default Personal;
+export default withBase(Personal);

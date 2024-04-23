@@ -37,4 +37,5 @@ export { default as Select } from "./input/Select";
 export { default as MarkdownEditor } from "./input/MarkdownEditor";
 export { default as QickView } from "./product/QickView";
 export { default as Congrat } from "./common/Congrat";
+export { default as CustomSelect } from "./input/CustomSelect";
 

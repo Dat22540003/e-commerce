@@ -13,11 +13,12 @@ router.get('/logout', ctrls.logout);
 router.post('/forgotpassword', ctrls.forgotPassword);
 router.put('/resetpassword', ctrls.resetPassword);
 router.get('/', [verifyAccessToken, isAdmin], ctrls.getUsers);
-router.delete('/:uid', [verifyAccessToken, isAdmin], ctrls.deleteUser);
 router.put('/current', verifyAccessToken, uploader.single('avatar'), ctrls.updateUser);
 router.put('/address', [verifyAccessToken], ctrls.updateUserAddress);
 router.put('/cart', [verifyAccessToken], ctrls.updateUserCart);
 router.delete('/remove-cart/:pid/:color', [verifyAccessToken], ctrls.removeProductFromCart);
+router.delete('/:uid', [verifyAccessToken, isAdmin], ctrls.deleteUser);
+router.put('/wishlist/:pid', [verifyAccessToken], ctrls.updateWishlist);
 router.put('/:uid', [verifyAccessToken, isAdmin], ctrls.updateUserByAdmin);
 
 

@@ -2,29 +2,14 @@ import React, { useEffect, useState } from "react";
 import payment from "assets/payment.svg";
 import { useSelector } from "react-redux";
 import { formatMoney } from "utils/helpers";
-import { Congrat, InputForm, Paypal } from "components";
-import { useForm } from "react-hook-form";
+import { Congrat, Paypal } from "components";
 import withBase from "hocs/withBase";
 import { getCurrent } from "store/user/asyncActions";
 
-
-const Checkout = ({dispatch, navigate}) => {
+const Checkout = ({ dispatch, navigate }) => {
   const { currentCart, current } = useSelector((state) => state.user);
 
-  const {
-    register,
-    formState: { errors },
-    watch,
-    setValue,
-  } = useForm();
-
-  const [isSucceed, setIsSucceed] = useState(false)
-
-  const address = watch("address");
-
-  useEffect(() => {
-    setValue("address", current?.address);
-  }, [current?.address]);
+  const [isSucceed, setIsSucceed] = useState(false);
 
   useEffect(() => {
     if (isSucceed) {
@@ -72,38 +57,30 @@ const Checkout = ({dispatch, navigate}) => {
               )} VND`}</span>
             )}
           </span>
-          <div className="w-full">
-            <InputForm
-              label="Address"
-              register={register}
-              errors={errors}
-              id="address"
-              validate={{ required: "Required" }}
-              placeholder={"Enter your address"}
-            />
-          </div>
-          <div className="w-full">
-            { (
-              <Paypal
-                payload={{
-                  products: currentCart,
-                  total: Math.round(
-                    currentCart?.reduce(
-                      (sum, el) => sum + Number(el?.price * el?.quantity),
-                      0
-                    ) / 23500
-                  ),
-                  address
-                }}
-                setIsSucceed={setIsSucceed}
-                amount={Math.round(
+          <span className="flex gap-2">
+            <span className="font-semibold">Address:</span>
+            <span>{current?.address}</span>
+          </span>
+          <div className="w-full mt-2">
+            <Paypal
+              payload={{
+                products: currentCart,
+                total: Math.round(
                   currentCart?.reduce(
                     (sum, el) => sum + Number(el?.price * el?.quantity),
                     0
                   ) / 23500
-                )}
-              />
-            )}
+                ),
+                address: current?.address,
+              }}
+              setIsSucceed={setIsSucceed}
+              amount={Math.round(
+                currentCart?.reduce(
+                  (sum, el) => sum + Number(el?.price * el?.quantity),
+                  0
+                ) / 23500
+              )}
+            />
           </div>
         </div>
       </div>

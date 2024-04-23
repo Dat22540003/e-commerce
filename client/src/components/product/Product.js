@@ -7,17 +7,27 @@ import icons from "utils/icons";
 import withBase from "hocs/withBase";
 import { showModal } from "store/app/appSlice";
 import { ProductDetail } from "pages/public";
-import { apiUpdateCart } from "apis";
+import { apiUpdateCart, apiUpdateWishlist } from "apis";
 import { toast } from "react-toastify";
 import { getCurrent } from "store/user/asyncActions";
 import { useSelector } from "react-redux";
 import Swal from "sweetalert2";
 import path from "utils/path";
 import { createSearchParams } from "react-router-dom";
+import clsx from "clsx";
 
 const { AiFillEye, BsFillCartPlusFill, BsCartCheckFill, AiFillHeart } = icons;
 
-const Product = ({ productData, isNew, normal, navigate, dispatch, location }) => {
+const Product = ({
+  productData,
+  isNew,
+  normal,
+  navigate,
+  dispatch,
+  location,
+  pid,
+  style,
+}) => {
   const [isShowOption, setIsShowOption] = useState(false);
   const { current } = useSelector((state) => state.user);
 
@@ -60,7 +70,13 @@ const Product = ({ productData, isNew, normal, navigate, dispatch, location }) =
       }
     }
     if (flag === "WHISHLIST") {
-      console.log("Add to whishlist");
+      const response = await apiUpdateWishlist(pid);
+      if(response?.success){
+        dispatch(getCurrent());
+        toast.success(response?.message);
+      } else{
+        toast.error(response?.message);
+      }
     }
     if (flag === "QUICK_VIEW") {
       dispatch(
@@ -77,7 +93,7 @@ const Product = ({ productData, isNew, normal, navigate, dispatch, location }) =
     }
   };
   return (
-    <div className="w-full text-base px-[10px]">
+    <div className={clsx("w-full text-base px-[10px]", style)}>
       <div
         className="w-full border p-[15px] flex flex-col items-center"
         onClick={() =>
@@ -128,7 +144,7 @@ const Product = ({ productData, isNew, normal, navigate, dispatch, location }) =
                 title="Add to whishlist"
                 onClick={(e) => handleClickOption(e, "WHISHLIST")}
               >
-                <SelectOption icon={<AiFillHeart />} />
+                <SelectOption icon={<AiFillHeart color={current?.wishlist?.some(item => item?._id === pid) ? 'red' : ''}/>} />
               </span>
             </div>
           )}

@@ -9,13 +9,15 @@ import {
 } from "../../components";
 import { useSelector } from "react-redux";
 import icons from "../../utils/icons";
+import withBase from "hocs/withBase";
+import { createSearchParams } from "react-router-dom";
 
 const { GrFormNext } = icons;
 
-const Home = () => {
+const Home = ({ navigate }) => {
   const { newProducts } = useSelector((state) => state.products);
   const { categories } = useSelector((state) => state.app);
-  const {isLoggedIn, current} = useSelector(state => state.user)
+  const { isLoggedIn, current } = useSelector((state) => state.user);
 
   return (
     <>
@@ -59,7 +61,18 @@ const Home = () => {
                     <h4 className="font-semibold uppercase">{el?.title}</h4>
                     <ul className="text-sm">
                       {el?.brand.map((item, index) => (
-                        <span key={index} className="flex gap-1 items-center text-gray-500">
+                        <span
+                          key={index}
+                          className="flex gap-1 items-center text-gray-500 cursor-pointer hover:text-main hover:underline"
+                          onClick={() =>
+                            navigate({
+                              pathname: `/${el?.title}`,
+                              search: createSearchParams({
+                                brand: item,
+                              }).toString(),
+                            })
+                          }
+                        >
                           <GrFormNext size={14} />
                           <li>{item}</li>
                         </span>
@@ -80,4 +93,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default withBase(Home);

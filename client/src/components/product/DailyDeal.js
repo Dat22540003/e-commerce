@@ -1,44 +1,33 @@
 import React, { useState, useEffect, memo } from "react";
 import icons from "utils/icons";
 import { apiGetProducts } from "apis";
-import {
-  formatMoney,
-  renderStarFromNumber,
-  secondsToHms,
-} from "utils/helpers";
+import { formatMoney, renderStarFromNumber, secondsToHms } from "utils/helpers";
 import { Countdown } from "components";
+import { useSelector } from "react-redux";
+import withBase from "hocs/withBase";
+import { getDailyDeal } from "store/product/productSlice";
 const moment = require("moment");
 
 const { AiFillStar, IoMenu } = icons;
 let idInterval;
 
-const DailyDeal = () => {
-  const [dailyDeal, setDailyDeal] = useState(null);
+const DailyDeal = ({ dispatch }) => {
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
   const [seconds, setSeconds] = useState(0);
   const [expiredTime, setExpiredTime] = useState(false);
+  const { dailyDeal } = useSelector((state) => state.products);
 
   const fetchDailyDeal = async () => {
     const response = await apiGetProducts({
-      limit: 1,
-      page: Math.round(Math.random() * 10),
+      limit: 10,
       sort: "-totalRating",
     });
     if (response.success) {
-      setDailyDeal(response.productData[0]);
-      const today = `${moment().format("MM/DD/YYYY")} 7:00:00`;
-      const seconds =
-        new Date(today).getTime() - new Date().getTime() + 24 * 3600 * 1000;
-      const number = secondsToHms(seconds);
-
-      setHours(number.h);
-      setMinutes(number.m);
-      setSeconds(number.s);
-    } else {
-      setHours(0);
-      setMinutes(59);
-      setSeconds(59);
+      const product = response.productData[Math.round(Math.random() * 10)];
+      dispatch(
+        getDailyDeal({ data: product, time: Date.now() + 24 * 60 * 60 * 1000 })
+      );
     }
   };
 
@@ -47,8 +36,22 @@ const DailyDeal = () => {
   // }, []);
 
   useEffect(() => {
+    if(dailyDeal?.time){
+      const remainedTime = dailyDeal?.time - Date.now();
+      const converedTime = secondsToHms(remainedTime);
+      setHours(converedTime.h);
+      setMinutes(converedTime.m);
+      setSeconds(converedTime.s);
+    }
+  },[dailyDeal]);
+
+  useEffect(() => {
     idInterval && clearInterval(idInterval);
-    fetchDailyDeal();
+    if (
+      moment(moment(dailyDeal?.time).format("MM/DD/YYYY")).isBefore(moment())
+    ) {
+      fetchDailyDeal();
+    }
   }, [expiredTime]);
 
   useEffect(() => {
@@ -88,21 +91,23 @@ const DailyDeal = () => {
       <div className="w-full flex flex-col items-center px-4 gap-2">
         <img
           src={
-            dailyDeal?.thumb ||
+            dailyDeal?.data?.thumb ||
             "https://nayemdevs.com/wp-content/uploads/2020/03/default-product-image.png"
           }
           alt=""
           className="w-full object-containn py-8"
         />
-        <span className="line-clamp-1 text-center">{dailyDeal?.title}</span>
+        <span className="line-clamp-1 text-center">
+          {dailyDeal?.data?.title}
+        </span>
         <span className="flex h-4">
-          {renderStarFromNumber(dailyDeal?.totalRating, 20)?.map(
+          {renderStarFromNumber(dailyDeal?.data?.totalRating, 20)?.map(
             (el, index) => (
               <span key={index}>{el}</span>
             )
           )}
         </span>
-        <span>{`${formatMoney(dailyDeal?.price)} VND`}</span>
+        <span>{`${formatMoney(dailyDeal?.data?.price)} VND`}</span>
       </div>
       <div className="px-4 mt-8">
         <div className="flex items-center justify-center gap-2 mb-4">
@@ -123,4 +128,4 @@ const DailyDeal = () => {
   );
 };
 
-export default memo(DailyDeal);
+export default withBase(memo(DailyDeal));

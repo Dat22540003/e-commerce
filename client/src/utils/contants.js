@@ -281,9 +281,20 @@ export const memberSidebar = [
   {
     id: 4,
     type: 'SINGLE',
-    text: 'Wishlist',
+    text: 'Wish list',
     path: `/${path.MEMBER}/${path.WISHLIST}`,
     icon: <AiOutlineOrderedList size={20}/>
   },
 
+]
+
+export const orderStatus = [
+  {
+    label:'Cancelled',
+    value:'Cancelled'
+  },
+  {
+    label:'Succeed',
+    value:'Succeed'
+  },
 ]
