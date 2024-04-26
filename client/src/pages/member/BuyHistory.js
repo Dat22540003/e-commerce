@@ -33,7 +33,7 @@ const BuyHistory = ({ navigate, location }) => {
     if (response?.success) {
       setOrderCount(response.count);
       setOrder(response.order);
-    } else{
+    } else {
       setOrderCount(0);
       setOrder(null);
     }
@@ -57,8 +57,8 @@ const BuyHistory = ({ navigate, location }) => {
         <h1>Buy history</h1>
       </div>
       <div className="flex w-full justify-end items-center px-4">
-        <form className="w-[55%] grid grid-cols-2 gap-2">
-          <div className="col-span-1">
+        <form className="w-[30%] grid grid-cols-2 gap-2 my-4">
+          {/* <div className="col-span-1">
             <InputForm
               style={"placeholder:text-xs placeholder:italic"}
               register={register}
@@ -67,12 +67,14 @@ const BuyHistory = ({ navigate, location }) => {
               fullWidth
               placeholder={"Search by title, description,..."}
             />
-          </div>
-          <div className="col-span-1 flex items-center">
+          </div> */}
+          <div className="col-span-2 flex items-end">
             <CustomSelect
               options={orderStatus}
               value={status}
-              onChange={(val)=>handleSearchStatus(val)}
+              onChange={(val) => {
+                handleSearchStatus(val)
+              }}
               wrapClassName={"w-full"}
             />
           </div>
@@ -103,7 +105,9 @@ const BuyHistory = ({ navigate, location }) => {
                     <span
                       key={item._id}
                       className="capitalize"
-                    >{`${item?.title?.toLowerCase()} | Color: ${item?.color?.toLowerCase()} | Quantity: ${item?.quantity}`}</span>
+                    >{`${item?.title?.toLowerCase()} | Color: ${item?.color?.toLowerCase()} | Quantity: ${
+                      item?.quantity
+                    }`}</span>
                   ))}
                 </span>
               </td>

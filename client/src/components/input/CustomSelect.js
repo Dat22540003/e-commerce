@@ -16,7 +16,6 @@ const CustomSelect = ({
       {label && <h3>{label}</h3>}
       <Select
         options={options}
-        isClearable
         placeholder={placeholder}
         value={value}
         isSearchable

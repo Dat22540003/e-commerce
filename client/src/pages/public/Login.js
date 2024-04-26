@@ -53,7 +53,7 @@ const Login = () => {
 
   const handleForgotPassword = async () => {
     const response = await apiForgotPassword({ email });
-    console.log(response);
+  
     if (response?.success) {
       toast.success(response?.message, { theme: "colored" });
     } else {
@@ -150,17 +150,28 @@ const Login = () => {
             />
 
             <div className="flex items-center justify-end w-full gap-4">
-              <Button
+              {/* <Button
                 name="Submit"
                 handleOnClick={handleForgotPassword}
                 style="my-2 px-4 py-2 rounded-md text-white bg-blue-500 text-semibold"
-              />
+              /> */}
               <Button
+                handleOnClick={handleForgotPassword}
+                style="my-2 px-4 py-2 rounded-md text-white bg-blue-500 text-semibold"
+              >
+                Submit
+              </Button>
+              {/* <Button
                 name="Back"
                 handleOnClick={() => {
                   setIsForgotPassword(false);
                 }}
-              />
+              /> */}
+              <Button
+                handleOnClick={()=>setIsForgotPassword(false)}
+              >
+                Back
+              </Button>
             </div>
           </div>
         </div>
