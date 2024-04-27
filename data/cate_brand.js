@@ -27,7 +27,7 @@ const data = [
     {
         cate: 'Accessories',
         brand: ['Smartwatch', 'Headphone', 'Bluetooth', 'KeyBoard', 'Mouse', 'Cases'],
-        image: 'https://digital-world-2.myshopify.com/cdn/shop/fil…70c7-4977-b57e-8847d56549c6_300x.jpg?v=1613166811'
+        image: 'https://www.svstore.vn/uploads/source/apple-watch-ultra/mqe23ref-vw-34fr-watch-49-titanium-ultra-vw-34fr-wf-co-watch-face-49-alpine-ultra-vw-34fr-wf-co-2.jpg'
     },
     {
         cate: 'Television',

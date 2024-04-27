@@ -18,6 +18,7 @@ const WhishList = () => {
               pid={el._id}
               productData={el}
               style="py-[10px]"
+              normal
             />
           </div>
         ))}
