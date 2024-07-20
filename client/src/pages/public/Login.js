@@ -115,6 +115,7 @@ const Login = () => {
     setisVerifiedEmail(false);
     setToken("");
   };
+
   return (
     <div className="w-screen h-screen relative">
       {isVerifiedEmail && (

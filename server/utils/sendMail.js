@@ -6,7 +6,7 @@ const sendMail = asyncHandler(async ({ email, html, subject }) => {
     host: "smtp.gmail.email",
     port: 587,
     service: 'gmail',
-    secure: false, // Use `true` for port 465, `false` for all other ports
+    secure: false, 
     auth: {
       user: process.env.EMAIL_NAME,
       pass: process.env.EMAIL_APP_PASSWORD,
@@ -14,10 +14,10 @@ const sendMail = asyncHandler(async ({ email, html, subject }) => {
   });
 
   const info = await transporter.sendMail({
-    from: '"digiatalshop" <no-reply@digitalshop.com>', // sender address
-    to: email, // list of receivers
-    subject: subject, // Subject line
-    html: html, // html body
+    from: '"digiatalshop" <no-reply@digitalshop.com>', 
+    to: email, 
+    subject: subject, 
+    html: html, 
   });
 
   return info;

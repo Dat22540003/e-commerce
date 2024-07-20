@@ -10,30 +10,6 @@ const crypto = require("crypto");
 const makeToken = require("uniqid");
 const { users } = require("../utils/constant");
 
-// Register user
-// const register = asyncHandler(async (req, res) => {
-//   const { firstname, lastname, email, password } = req.body;
-//   if (!email || !password || !firstname || !lastname) {
-//     return res.status(400).json({
-//       success: false,
-//       message: 'Missing input',
-//     });
-//   }
-
-//   const user = await User.findOne({ email });
-//   if (user) {
-//     throw new Error('User already exists');
-//   } else {
-//     const newUser = await User.create(req.body);
-//     return res.status(200).json({
-//       success: newUser ? true : false,
-//       message: newUser
-//         ? 'Registration successful. Please go to login!'
-//         : 'Registration failed!',
-//     });
-//   }
-// });
-
 const register = asyncHandler(async (req, res) => {
   const { email, password, firstname, lastname, mobile } = req.body;
   if (!email || !password || !firstname || !lastname || !mobile) {
@@ -86,12 +62,6 @@ const completeRegister = asyncHandler(async (req, res) => {
     success: notActiveEmail ? true : false,
     message: notActiveEmail ? "Registration succeed" : "Registration failed!",
   });
-
-  // if (newUser) {
-  //   return res.redirect(`${process.env.CLIENT_URL}/completeregister/succeed`);
-  // } else {
-  //   return res.redirect(`${process.env.CLIENT_URL}/completeregister/failed`);
-  // }
 });
 
 // Refresh token is used to generate new access token
